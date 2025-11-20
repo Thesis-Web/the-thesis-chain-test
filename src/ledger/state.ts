@@ -1,5 +1,5 @@
 import type { Address, Amount, Hash, Height, UnixTimeSeconds } from "../types/primitives.js";
-import type { Block } from "./block.js";
+import type { Block, Transaction } from "./block.js";
 import { computeBlockRewards, applyMinerReward, applyNodeReward } from "../rewards/rewards.js";
 import { checkForSplit, applySplit } from "../splits/split-engine.js";
 
@@ -37,6 +37,16 @@ export function createGenesisState(): ChainState {
 // INTERNAL HELPERS
 // ---------------------------------------------------------------------------
 
+// Get or create an account entry.
+function getOrCreateAccount(state: ChainState, addr: Address): AccountState {
+  let acct = state.accounts.get(addr);
+  if (!acct) {
+    acct = { address: addr, balanceTHE: 0n };
+    state.accounts.set(addr, acct);
+  }
+  return acct;
+}
+
 // Basic header validation (dev-phase).
 function validateHeader(state: ChainState, block: Block): void {
   // Height must be exactly +1
@@ -59,10 +69,55 @@ function validateHeader(state: ChainState, block: Block): void {
   }
 }
 
-// Apply TXs (dev-phase: no-op).
-// Next step: interpret kinds (TRANSFER, VAULT_OP, BOT_OP, PARAM_UPDATE, etc.)
-function applyTransactions(_state: ChainState, _block: Block): void {
-  // TX interpretation not implemented yet.
+// Apply a single transaction.
+// For now we ONLY implement basic TRANSFER semantics.
+// Everything else is a no-op placeholder.
+function applyTransaction(state: ChainState, tx: Transaction): void {
+  switch (tx.kind) {
+    case "TRANSFER": {
+      if (!tx.to) {
+        throw new Error("TRANSFER tx missing 'to' address");
+      }
+      if (tx.amount <= 0n) {
+        throw new Error("TRANSFER tx must have positive amount");
+      }
+
+      const fromAcct = getOrCreateAccount(state, tx.from);
+      if (fromAcct.balanceTHE < tx.amount) {
+        throw new Error("Insufficient balance for TRANSFER");
+      }
+
+      const toAcct = getOrCreateAccount(state, tx.to);
+
+      fromAcct.balanceTHE -= tx.amount;
+      toAcct.balanceTHE += tx.amount;
+      return;
+    }
+
+    case "VAULT_OP":
+      // TODO: Implement vault operations (§065/§125).
+      return;
+
+    case "BOT_OP":
+      // TODO: Implement BoT treasury ops (§075/§080/§200).
+      return;
+
+    case "PARAM_UPDATE":
+      // TODO: Implement param registry updates (Appendix-B).
+      return;
+
+    case "ANCHOR_L2":
+    case "ANCHOR_L3":
+      // TODO: Implement rollup anchor verification (§030).
+      return;
+  }
+}
+
+// Apply TXs for a block.
+function applyTransactions(state: ChainState, block: Block): void {
+  for (const tx of block.txs) {
+    applyTransaction(state, tx);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -84,7 +139,7 @@ export function applyBlock(state: ChainState, block: Block): ChainState {
     accounts: new Map(state.accounts) // shallow copy of map; values are shared
   };
 
-  // 3) Apply transactions (currently a no-op)
+  // 3) Apply transactions
   applyTransactions(newState, block);
 
   // 4) Rewards
