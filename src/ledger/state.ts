@@ -1,7 +1,61 @@
 import type { Address, Amount } from "../types/primitives.js";
 import type { Block, BlockHeader } from "./block.js";
 import { computeBlockRewards, applyMinerReward, applyNodeReward } from "../rewards/rewards.js";
-import type { VaultMap } from "../vault/types.js";
+import type { VaultMap, VaultId } from "../vault/types.js";
+import { createVault, depositToVault, withdrawFromVault } from "../vault/vault.js";
+
+// ---------------------------------------------------------------------------
+// TRANSACTION TYPES
+// ---------------------------------------------------------------------------
+
+export type TxKind = "PAY" | "VAULT_OP";
+
+// Basic payment transaction: move THE between accounts.
+export interface PaymentTx {
+  kind: "PAY";
+  from: Address;
+  to: Address;
+  amountTHE: Amount; // base THE units
+}
+
+// Vault operations are generic for now; EU-/wTHE-specific semantics will be
+// layered on later once §§096 / 096a / 101 are fully wired.
+export type VaultOpKind =
+  | "VAULT_CREATE"   // create a new vault with an owner and optional initial deposit
+  | "VAULT_DEPOSIT"  // move THE from an account into an existing vault
+  | "VAULT_WITHDRAW"; // move THE from a vault into an account
+
+export interface VaultOpTxBase {
+  kind: "VAULT_OP";
+  op: VaultOpKind;
+  vaultId: VaultId;
+}
+
+// Create a new vault and optionally fund it from a source account.
+export interface VaultCreateTx extends VaultOpTxBase {
+  op: "VAULT_CREATE";
+  owner: Address;
+  from?: Address;          // optional funding account
+  initialDepositTHE?: Amount; // optional initial deposit from `from`
+}
+
+// Deposit THE from an account into an existing vault.
+export interface VaultDepositTx extends VaultOpTxBase {
+  op: "VAULT_DEPOSIT";
+  from: Address;
+  amountTHE: Amount;
+}
+
+// Withdraw THE from a vault into an account.
+export interface VaultWithdrawTx extends VaultOpTxBase {
+  op: "VAULT_WITHDRAW";
+  to: Address;
+  amountTHE: Amount;
+}
+
+export type VaultOpTx = VaultCreateTx | VaultDepositTx | VaultWithdrawTx;
+
+export type Transaction = PaymentTx | VaultOpTx;
 
 // ---------------------------------------------------------------------------
 // ACCOUNTS
@@ -12,20 +66,10 @@ export interface Account {
   balanceTHE: Amount;
 }
 
-// Simple transfer transaction used in sims.
-// Later, we can extend this into a tagged union (PAY, VAULT_OP, GOV_OP, etc.).
-export interface Transaction {
-  from: Address;
-  to: Address;
-  amountTHE: Amount; // always base THE
-}
-
 // ---------------------------------------------------------------------------
 // CHAIN STATE
 // ---------------------------------------------------------------------------
 
-// This is the canonical in-memory representation of chain state for sims.
-// On a real node, this would be backed by a DB / trie, but the shape is the same.
 export interface ChainState {
   // Current canonical height (best chain tip).
   height: number;
@@ -34,12 +78,12 @@ export interface ChainState {
   accounts: Map<Address, Account>;
 
   // Vaults: used for EU Certificates and wTHE-backing escrow.
-  // For now, these are populated only by sims / future tx handlers.
+  // For now, these are populated only by dedicated VAULT_OP txs / sims.
   vaults: VaultMap;
 }
 
 // ---------------------------------------------------------------------------
-// HELPERS
+// ACCOUNT HELPERS
 // ---------------------------------------------------------------------------
 
 export function getOrCreateAccount(state: ChainState, addr: Address): Account {
@@ -51,9 +95,8 @@ export function getOrCreateAccount(state: ChainState, addr: Address): Account {
   return acct;
 }
 
-// Simple transfer handler used in the basic sim. This will eventually be
-// replaced by a richer transaction dispatcher but is fine for now.
-export function applyTransferTx(state: ChainState, tx: Transaction): void {
+// Basic PAY transaction handler.
+export function applyPaymentTx(state: ChainState, tx: PaymentTx): void {
   if (tx.amountTHE <= 0n) return;
 
   const from = getOrCreateAccount(state, tx.from);
@@ -65,6 +108,67 @@ export function applyTransferTx(state: ChainState, tx: Transaction): void {
 
   from.balanceTHE -= tx.amountTHE;
   to.balanceTHE += tx.amountTHE;
+}
+
+// ---------------------------------------------------------------------------
+// VAULT OP HANDLER (GENERIC FOR NOW)
+// ---------------------------------------------------------------------------
+
+function applyVaultOpTx(state: ChainState, tx: VaultOpTx): void {
+  const height = state.height; // use current height for vault metadata
+
+  switch (tx.op) {
+    case "VAULT_CREATE": {
+      const owner = tx.owner;
+      const initialDeposit = tx.initialDepositTHE ?? 0n;
+
+      // 1) Create the vault (empty).
+      createVault(state.vaults, tx.vaultId, owner, height);
+
+      // 2) Optional initial deposit from `from` account.
+      if (initialDeposit > 0n) {
+        if (!tx.from) {
+          throw new Error("VAULT_CREATE with initialDepositTHE requires `from` account");
+        }
+        const fromAcct = getOrCreateAccount(state, tx.from);
+        if (fromAcct.balanceTHE < initialDeposit) {
+          throw new Error(`VAULT_CREATE: insufficient balance in ${tx.from}`);
+        }
+        fromAcct.balanceTHE -= initialDeposit;
+        depositToVault(state.vaults, tx.vaultId, initialDeposit, height);
+      }
+      break;
+    }
+
+    case "VAULT_DEPOSIT": {
+      if (tx.amountTHE <= 0n) return;
+
+      const fromAcct = getOrCreateAccount(state, tx.from);
+      if (fromAcct.balanceTHE < tx.amountTHE) {
+        throw new Error(`VAULT_DEPOSIT: insufficient balance in ${tx.from}`);
+      }
+
+      fromAcct.balanceTHE -= tx.amountTHE;
+      depositToVault(state.vaults, tx.vaultId, tx.amountTHE, height);
+      break;
+    }
+
+    case "VAULT_WITHDRAW": {
+      if (tx.amountTHE <= 0n) return;
+
+      // Ensure vault has funds; withdrawFromVault will enforce no overdraft.
+      withdrawFromVault(state.vaults, tx.vaultId, tx.amountTHE, height);
+
+      const toAcct = getOrCreateAccount(state, tx.to);
+      toAcct.balanceTHE += tx.amountTHE;
+      break;
+    }
+
+    default: {
+      const _exhaustive: never = tx;
+      throw new Error(`Unknown VaultOp kind: ${(tx as any).op}`);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -105,10 +209,20 @@ export function createGenesisState(cfg: GenesisConfig = {}): ChainState {
 // BLOCK APPLICATION
 // ---------------------------------------------------------------------------
 
-// Apply all transactions in a block in order (naive, single-threaded).
 function applyTransactions(state: ChainState, block: Block): void {
-  for (const tx of block.txs as Transaction[]) {
-    applyTransferTx(state, tx);
+  for (const raw of block.txs as Transaction[]) {
+    switch (raw.kind) {
+      case "PAY":
+        applyPaymentTx(state, raw);
+        break;
+      case "VAULT_OP":
+        applyVaultOpTx(state, raw);
+        break;
+      default: {
+        const _never: never = raw;
+        throw new Error(`Unknown tx kind: ${(raw as any).kind}`);
+      }
+    }
   }
 }
 
@@ -148,7 +262,8 @@ export function applyBlock(state: ChainState, block: Block): void {
   state.height = block.header.height;
 
   // NOTE:
-  // - Vaults are present on ChainState but are not yet wired into any tx type.
-  // - Split engine, EU Cert logic, and wTHE-backing behavior will be layered
-  //   on top in separate, explicit steps so we don't accidentally drift.
+  // - Vaults are present on ChainState and now manipulated via VAULT_OP txs.
+  // - EU Certificate vs wTHE-specific semantics are *not* encoded here yet.
+  //   Those rules will be layered in once the higher-level spec sections are
+  //   wired through dedicated helpers.
 }

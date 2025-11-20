@@ -1,5 +1,5 @@
 import type { Address, Amount } from "../types/primitives.js";
-import type { VaultId, VaultState, VaultMap } from "./types.js";
+import type { VaultId, VaultState, VaultMap, VaultKind } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // INTERNAL HELPERS
@@ -30,7 +30,8 @@ export function createVault(
   vaults: VaultMap,
   id: VaultId,
   owner: Address,
-  currentHeight: number
+  currentHeight: number,
+  kind: VaultKind = "GENERIC"
 ): VaultState {
   if (vaults.has(id)) {
     throw new Error(`Vault already exists: ${id}`);
@@ -39,6 +40,7 @@ export function createVault(
   const v: VaultState = {
     id,
     owner,
+    kind,
     balanceTHE: 0n,
     createdAtHeight: currentHeight,
     updatedAtHeight: currentHeight
