@@ -1,8 +1,14 @@
 import type { Address, Amount } from "../types/primitives.js";
 import type { Block, BlockHeader } from "./block.js";
 import { computeBlockRewards, applyMinerReward, applyNodeReward } from "../rewards/rewards.js";
-import type { VaultMap, VaultId } from "../vault/types.js";
-import { createVault, depositToVault, withdrawFromVault } from "../vault/vault.js";
+import type { VaultMap, VaultId, VaultKind } from "../vault/types.js";
+import {
+  createVault,
+  createEuCertVault,
+  createWtheBackingVault,
+  depositToVault,
+  withdrawFromVault
+} from "../vault/vault.js";
 
 // ---------------------------------------------------------------------------
 // TRANSACTION TYPES
@@ -18,8 +24,8 @@ export interface PaymentTx {
   amountTHE: Amount; // base THE units
 }
 
-// Vault operations are generic for now; EU-/wTHE-specific semantics will be
-// layered on later once §§096 / 096a / 101 are fully wired.
+// Vault operations are generic for now; EU-/wTHE-specific semantics are
+// enforced via vault kinds and metadata, not oracle logic in this file.
 export type VaultOpKind =
   | "VAULT_CREATE"   // create a new vault with an owner and optional initial deposit
   | "VAULT_DEPOSIT"  // move THE from an account into an existing vault
@@ -32,11 +38,24 @@ export interface VaultOpTxBase {
 }
 
 // Create a new vault and optionally fund it from a source account.
+//
+// For EU_CERT vaults:
+//   - vaultKind = "EU_CERT"
+//   - faceEU must be provided (EU face value)
+//   - initialDepositTHE is the amount of THE to lock, precomputed using
+//     the oracle / BoT logic outside this module.
+//
+// For WTHE_BACKING vaults:
+//   - vaultKind = "WTHE_BACKING"
+//   - wrappedSupplyTHE must be provided
 export interface VaultCreateTx extends VaultOpTxBase {
   op: "VAULT_CREATE";
   owner: Address;
-  from?: Address;          // optional funding account
-  initialDepositTHE?: Amount; // optional initial deposit from `from`
+  from?: Address;              // optional funding account
+  initialDepositTHE?: Amount;  // optional initial deposit from `from`
+  vaultKind?: VaultKind;       // defaults to "GENERIC" if omitted
+  faceEU?: bigint;             // EU_CERT only
+  wrappedSupplyTHE?: Amount;   // WTHE_BACKING only
 }
 
 // Deposit THE from an account into an existing vault.
@@ -54,7 +73,6 @@ export interface VaultWithdrawTx extends VaultOpTxBase {
 }
 
 export type VaultOpTx = VaultCreateTx | VaultDepositTx | VaultWithdrawTx;
-
 export type Transaction = PaymentTx | VaultOpTx;
 
 // ---------------------------------------------------------------------------
@@ -78,7 +96,6 @@ export interface ChainState {
   accounts: Map<Address, Account>;
 
   // Vaults: used for EU Certificates and wTHE-backing escrow.
-  // For now, these are populated only by dedicated VAULT_OP txs / sims.
   vaults: VaultMap;
 }
 
@@ -111,7 +128,7 @@ export function applyPaymentTx(state: ChainState, tx: PaymentTx): void {
 }
 
 // ---------------------------------------------------------------------------
-// VAULT OP HANDLER (GENERIC FOR NOW)
+// VAULT OP HANDLER (with EU_CERT / WTHE kinds)
 // ---------------------------------------------------------------------------
 
 function applyVaultOpTx(state: ChainState, tx: VaultOpTx): void {
@@ -121,9 +138,29 @@ function applyVaultOpTx(state: ChainState, tx: VaultOpTx): void {
     case "VAULT_CREATE": {
       const owner = tx.owner;
       const initialDeposit = tx.initialDepositTHE ?? 0n;
+      const kind: VaultKind = tx.vaultKind ?? "GENERIC";
 
-      // 1) Create the vault (empty).
-      createVault(state.vaults, tx.vaultId, owner, height);
+      // 1) Create the vault of the appropriate kind.
+      if (kind === "EU_CERT") {
+        if (tx.faceEU === undefined) {
+          throw new Error("VAULT_CREATE(EU_CERT): faceEU is required");
+        }
+        createEuCertVault(state.vaults, tx.vaultId, owner, tx.faceEU, height);
+      } else if (kind === "WTHE_BACKING") {
+        if (tx.wrappedSupplyTHE === undefined) {
+          throw new Error("VAULT_CREATE(WTHE_BACKING): wrappedSupplyTHE is required");
+        }
+        createWtheBackingVault(
+          state.vaults,
+          tx.vaultId,
+          owner,
+          tx.wrappedSupplyTHE,
+          height
+        );
+      } else {
+        // GENERIC or unknown kinds fall back to a simple vault.
+        createVault(state.vaults, tx.vaultId, owner, height, kind);
+      }
 
       // 2) Optional initial deposit from `from` account.
       if (initialDeposit > 0n) {
@@ -263,7 +300,6 @@ export function applyBlock(state: ChainState, block: Block): void {
 
   // NOTE:
   // - Vaults are present on ChainState and now manipulated via VAULT_OP txs.
-  // - EU Certificate vs wTHE-specific semantics are *not* encoded here yet.
-  //   Those rules will be layered in once the higher-level spec sections are
-  //   wired through dedicated helpers.
+  // - EU Certificate vs wTHE-specific split behavior is still handled by the
+  //   split engine / higher-level modules, not in this file.
 }
