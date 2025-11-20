@@ -1,44 +1,48 @@
-import type { Address, Amount, Hash, Height, UnixTimeSeconds } from "../types/primitives.js";
-import type { Block, Transaction } from "./block.js";
+import type { Address, Amount } from "../types/primitives.js";
+import type { Block, BlockHeader } from "./block.js";
 import { computeBlockRewards, applyMinerReward, applyNodeReward } from "../rewards/rewards.js";
-import { checkForSplit, applySplit } from "../splits/split-engine.js";
+import type { VaultMap } from "../vault/types.js";
 
-// Simple account model for L1 balances.
-// §040 — Mining & Rewards, §065/§125 — Vaults, §075/§080 — BoT.
-export interface AccountState {
+// ---------------------------------------------------------------------------
+// ACCOUNTS
+// ---------------------------------------------------------------------------
+
+export interface Account {
   readonly address: Address;
   balanceTHE: Amount;
 }
 
-// Global chain state at a given height.
-// This is what the header's stateRoot conceptually commits to.
+// Simple transfer transaction used in sims.
+// Later, we can extend this into a tagged union (PAY, VAULT_OP, GOV_OP, etc.).
+export interface Transaction {
+  from: Address;
+  to: Address;
+  amountTHE: Amount; // always base THE
+}
+
+// ---------------------------------------------------------------------------
+// CHAIN STATE
+// ---------------------------------------------------------------------------
+
+// This is the canonical in-memory representation of chain state for sims.
+// On a real node, this would be backed by a DB / trie, but the shape is the same.
 export interface ChainState {
-  readonly height: Height;
-  readonly timestamp: UnixTimeSeconds;
-  readonly lastBlockHash: Hash | null;
+  // Current canonical height (best chain tip).
+  height: number;
 
-  // Simple in-memory key/value store for now.
-  // Later this can be backed by a trie or DB.
-  accounts: Map<Address, AccountState>;
-}
+  // Simple account model: Address → Account.
+  accounts: Map<Address, Account>;
 
-// Create an empty genesis state.
-// Later we will wire this to §095/§095B for actual genesis allocations.
-export function createGenesisState(): ChainState {
-  return {
-    height: 0,
-    timestamp: 0,
-    lastBlockHash: null,
-    accounts: new Map()
-  };
+  // Vaults: used for EU Certificates and wTHE-backing escrow.
+  // For now, these are populated only by sims / future tx handlers.
+  vaults: VaultMap;
 }
 
 // ---------------------------------------------------------------------------
-// INTERNAL HELPERS
+// HELPERS
 // ---------------------------------------------------------------------------
 
-// Get or create an account entry.
-function getOrCreateAccount(state: ChainState, addr: Address): AccountState {
+export function getOrCreateAccount(state: ChainState, addr: Address): Account {
   let acct = state.accounts.get(addr);
   if (!acct) {
     acct = { address: addr, balanceTHE: 0n };
@@ -47,116 +51,104 @@ function getOrCreateAccount(state: ChainState, addr: Address): AccountState {
   return acct;
 }
 
-// Basic header validation (dev-phase).
-function validateHeader(state: ChainState, block: Block): void {
-  // Height must be exactly +1
+// Simple transfer handler used in the basic sim. This will eventually be
+// replaced by a richer transaction dispatcher but is fine for now.
+export function applyTransferTx(state: ChainState, tx: Transaction): void {
+  if (tx.amountTHE <= 0n) return;
+
+  const from = getOrCreateAccount(state, tx.from);
+  const to = getOrCreateAccount(state, tx.to);
+
+  if (from.balanceTHE < tx.amountTHE) {
+    throw new Error(`Insufficient balance for ${tx.from}`);
+  }
+
+  from.balanceTHE -= tx.amountTHE;
+  to.balanceTHE += tx.amountTHE;
+}
+
+// ---------------------------------------------------------------------------
+// GENESIS
+// ---------------------------------------------------------------------------
+
+export interface GenesisAccountInit {
+  address: Address;
+  balanceTHE: Amount;
+}
+
+export interface GenesisConfig {
+  height?: number;
+  accounts?: GenesisAccountInit[];
+}
+
+// Minimal genesis for sims: accept an optional list of initial accounts.
+export function createGenesisState(cfg: GenesisConfig = {}): ChainState {
+  const accounts = new Map<Address, Account>();
+
+  for (const init of cfg.accounts ?? []) {
+    accounts.set(init.address, {
+      address: init.address,
+      balanceTHE: init.balanceTHE
+    });
+  }
+
+  const vaults: VaultMap = new Map();
+
+  return {
+    height: cfg.height ?? 0,
+    accounts,
+    vaults
+  };
+}
+
+// ---------------------------------------------------------------------------
+// BLOCK APPLICATION
+// ---------------------------------------------------------------------------
+
+// Apply all transactions in a block in order (naive, single-threaded).
+function applyTransactions(state: ChainState, block: Block): void {
+  for (const tx of block.txs as Transaction[]) {
+    applyTransferTx(state, tx);
+  }
+}
+
+// Apply header-level economics (miner + node rewards).
+function applyRewards(state: ChainState, header: BlockHeader): void {
+  const { minerReward, nodeReward } = computeBlockRewards(header);
+
+  if (!header.miner) {
+    throw new Error("BlockHeader.miner is required for rewards");
+  }
+
+  if (minerReward > 0n) {
+    applyMinerReward(state, header.miner, minerReward);
+  }
+  if (nodeReward > 0n) {
+    applyNodeReward(state, nodeReward);
+  }
+}
+
+// Public entry point used by sims.
+// This mutates the state in-place.
+export function applyBlock(state: ChainState, block: Block): void {
+  // Basic monotonic height check.
   if (block.header.height !== state.height + 1) {
     throw new Error(
-      `Invalid block height: expected ${state.height + 1} got ${block.header.height}`
+      `applyBlock: unexpected height. Got ${block.header.height}, expected ${state.height + 1}`
     );
   }
 
-  // prevHash must match lastBlockHash (dev-phase; real block hash to come later)
-  if (state.lastBlockHash !== null && block.header.prevHash !== state.lastBlockHash) {
-    throw new Error(
-      `Invalid prevHash: expected ${state.lastBlockHash} got ${block.header.prevHash}`
-    );
-  }
+  // 1) Apply transactions.
+  applyTransactions(state, block);
 
-  // Timestamps must be non-decreasing
-  if (block.header.timestamp < state.timestamp) {
-    throw new Error(`Timestamp regression detected`);
-  }
-}
+  // 2) Apply rewards (miner + node pool).
+  applyRewards(state, block.header);
 
-// Apply a single transaction.
-// For now we ONLY implement basic TRANSFER semantics.
-// Everything else is a no-op placeholder.
-function applyTransaction(state: ChainState, tx: Transaction): void {
-  switch (tx.kind) {
-    case "TRANSFER": {
-      if (!tx.to) {
-        throw new Error("TRANSFER tx missing 'to' address");
-      }
-      if (tx.amount <= 0n) {
-        throw new Error("TRANSFER tx must have positive amount");
-      }
+  // 3) Advance height.
+  state.height = block.header.height;
 
-      const fromAcct = getOrCreateAccount(state, tx.from);
-      if (fromAcct.balanceTHE < tx.amount) {
-        throw new Error("Insufficient balance for TRANSFER");
-      }
-
-      const toAcct = getOrCreateAccount(state, tx.to);
-
-      fromAcct.balanceTHE -= tx.amount;
-      toAcct.balanceTHE += tx.amount;
-      return;
-    }
-
-    case "VAULT_OP":
-      // TODO: Implement vault operations (§065/§125).
-      return;
-
-    case "BOT_OP":
-      // TODO: Implement BoT treasury ops (§075/§080/§200).
-      return;
-
-    case "PARAM_UPDATE":
-      // TODO: Implement param registry updates (Appendix-B).
-      return;
-
-    case "ANCHOR_L2":
-    case "ANCHOR_L3":
-      // TODO: Implement rollup anchor verification (§030).
-      return;
-  }
-}
-
-// Apply TXs for a block.
-function applyTransactions(state: ChainState, block: Block): void {
-  for (const tx of block.txs) {
-    applyTransaction(state, tx);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// MAIN STATE TRANSITION FUNCTION
-// ---------------------------------------------------------------------------
-
-export function applyBlock(state: ChainState, block: Block): ChainState {
-  // 1) Validate header basics
-  validateHeader(state, block);
-
-  // 2) Clone state so we mutate safely (pure-ish functional style)
-  const newState: ChainState = {
-    ...state,
-    height: block.header.height,
-    timestamp: block.header.timestamp,
-    // NOTE: for now we store prevHash here; once we compute actual block hashes
-    // we will update this to store the current block's hash instead.
-    lastBlockHash: block.header.prevHash,
-    accounts: new Map(state.accounts) // shallow copy of map; values are shared
-  };
-
-  // 3) Apply transactions
-  applyTransactions(newState, block);
-
-  // 4) Rewards
-  const reward = computeBlockRewards(block.header);
-
-  // 4a) Miner reward → credit directly to miner address
-  applyMinerReward(newState, block.header.miner, reward.minerReward);
-
-  // 4b) Node reward → NIP / BoT handled later (currently a no-op)
-  applyNodeReward(newState, reward.nodeReward);
-
-  // 5) Split Engine (if a split is triggered at this height)
-  const splitEvent = checkForSplit(newState);
-  if (splitEvent) {
-    applySplit(newState, splitEvent);
-  }
-
-  // 6) Return the new state snapshot
-  return newState;
+  // NOTE:
+  // - Vaults are present on ChainState but are not yet wired into any tx type.
+  // - Split engine, EU Cert logic, and wTHE-backing behavior will be layered
+  //   on top in separate, explicit steps so we don't accidentally drift.
 }
