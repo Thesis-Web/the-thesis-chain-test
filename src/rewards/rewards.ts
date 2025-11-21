@@ -1,30 +1,42 @@
-// src/rewards/rewards
+// src/rewards/rewards.ts
 // ---------------------------------------------------------------------------
-// Simple block rewards (v1 scaffold)
-// ---------------------------------------------------------------------------
-//
-// For now:
-//   - fixed 10 THE per block to miner
-//   - no node pool / NIP yet
+// Block reward application: miner + node income pool (NIP).
+// Uses emission model + epoch schedule from src/emissions/model.ts.
 // ---------------------------------------------------------------------------
 
-import type { Amount, Address } from "../types/primitives";
+import type { Address, Amount } from "../types/primitives";
 import type { ChainState } from "../ledger/state";
 import { creditAccount } from "../ledger/state";
+import { computeBlockRewards } from "../emissions/model";
 
-// Fixed block reward in base THE units.
-export function computeBlockReward(height: number): Amount {
-  // Later: make this epoch-aware per Appendix-B / §040.
-  return 10n;
+// Internal pseudo-address for the Node Income Pool (NIP).
+// This is *not* a normal user wallet; BoT/Treasury will manage it.
+export const NODE_POOL_ADDRESS: Address = "NIP_POOL";
+
+export interface AppliedRewards {
+  readonly minerReward: Amount;
+  readonly nodeReward: Amount;
+  readonly epochIndex: number;
 }
 
-// Apply reward to miner.
+// Apply rewards for a given block height.
+//  • credits miner account
+//  • credits node pool account
+//  • returns the amounts applied (for sims / logging)
 export function applyBlockReward(
   state: ChainState,
   miner: Address,
   height: number
-): void {
-  const reward = computeBlockReward(height);
-  if (reward <= 0n) return;
-  creditAccount(state, miner, reward);
+): AppliedRewards {
+  const { minerReward, nodeReward, epochIndex } = computeBlockRewards(height);
+
+  if (minerReward > 0n) {
+    creditAccount(state, miner, minerReward);
+  }
+
+  if (nodeReward > 0n) {
+    creditAccount(state, NODE_POOL_ADDRESS, nodeReward);
+  }
+
+  return { minerReward, nodeReward, epochIndex };
 }
