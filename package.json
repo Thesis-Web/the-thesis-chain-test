@@ -1,17 +1,17 @@
-
 {
   "name": "the-thesis-chain",
   "version": "0.1.0",
-  "description": "L1 Energy & Emissions Ledger for The Thesis Project",
-  "license": "MIT",
-  "type": "module",
+  "private": true,
+  "main": "dist/index.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts"
+    "build": "tsc -p .",
+    "lint": "tsc --noEmit",
+    "simple-sim": "ts-node src/sims/simple-sim.ts",
+    "block-sim": "ts-node src/sims/block-sim.ts"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.0"
+    "typescript": "^5.5.0"
   }
 }
