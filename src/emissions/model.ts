@@ -1,71 +1,48 @@
 // src/emissions/model.ts
 // ---------------------------------------------------------------------------
-// Emission + reward schedule model for THE.
-// Pure math: no ChainState imports here.
+// Emission model for miner + Node Income Pool as a function of block height.
+// No ChainState here — just math.
 // ---------------------------------------------------------------------------
 
 import type { Amount } from "../types/primitives";
-import { getEpochIndex } from "../epoch/epoch";
+import {
+  BLOCKS_PER_EPOCH,
+  BASE_MINER_REWARD_THE,
+  NIP_SHARE_BASIS_POINTS,
+  clampEpochIndex
+} from "./params";
 
-export interface RewardScheduleEntry {
-  readonly fromEpoch: number;      // inclusive
-  readonly minerRewardTHE: Amount; // base units of THE
-  readonly nodeRewardTHE: Amount;  // base units of THE
-}
-
-export interface BlockReward {
-  readonly minerReward: Amount;
-  readonly nodeReward: Amount;
+export interface EmissionBreakdown {
+  readonly minerRewardTHE: Amount;
+  readonly nipRewardTHE: Amount;
+  readonly totalRewardTHE: Amount;
   readonly epochIndex: number;
-  readonly schedule: RewardScheduleEntry;
 }
 
-// ---------------------------------------------------------------------------
-// Reward schedule
-// ---------------------------------------------------------------------------
-//
-// TEMPORARY hard-coded schedule matching the spirit of §040:
-//   • Epoch 0: bootstrap — 10 THE miner, 3 THE node pool
-//   • Epoch 1: growth   — 20 THE miner, 3 THE node pool
-//   • Epoch 2+: steady  — 40 THE miner, 3 THE node pool
-//
-// Later this can be replaced with an on-chain param registry.
-// ---------------------------------------------------------------------------
-
-export const REWARD_SCHEDULE: RewardScheduleEntry[] = [
-  { fromEpoch: 0, minerRewardTHE: 10n, nodeRewardTHE: 3n },
-  { fromEpoch: 1, minerRewardTHE: 20n, nodeRewardTHE: 3n },
-  { fromEpoch: 2, minerRewardTHE: 40n, nodeRewardTHE: 3n },
-];
-
-// Choose the entry with the largest fromEpoch <= epochIndex.
-// Assumes there is always at least one entry with fromEpoch = 0.
-export function getRewardScheduleForEpoch(epochIndex: number): RewardScheduleEntry {
-  let best: RewardScheduleEntry | null = null;
-
-  for (const entry of REWARD_SCHEDULE) {
-    if (entry.fromEpoch <= epochIndex) {
-      if (!best || entry.fromEpoch > best.fromEpoch) {
-        best = entry;
-      }
-    }
+/**
+ * Compute miner + NIP rewards for a given block height.
+ */
+export function computeEmissionForHeight(height: number): EmissionBreakdown {
+  if (height <= 0) {
+    throw new Error(`Block height must be >= 1, got ${height}`);
   }
 
-  return best ?? REWARD_SCHEDULE[0];
-}
+  // Epoch index is 0-based.
+  const epochIndexRaw = Math.floor((height - 1) / BLOCKS_PER_EPOCH);
+  const epochIndex = clampEpochIndex(epochIndexRaw);
 
-// Compute miner + node rewards for a given block height.
-export function computeBlockRewards(height: number): BlockReward {
-  const epochIndex = getEpochIndex(height);
-  const schedule = getRewardScheduleForEpoch(epochIndex);
+  const baseMinerReward = BASE_MINER_REWARD_THE[epochIndex];
 
-  const minerReward = schedule.minerRewardTHE;
-  const nodeReward = schedule.nodeRewardTHE;
+  // NIP share in basis points (1/100 of a percent).
+  const nipReward =
+    (baseMinerReward * BigInt(NIP_SHARE_BASIS_POINTS)) / 10_000n;
+  const minerReward = baseMinerReward - nipReward;
+  const total = minerReward + nipReward;
 
   return {
-    minerReward,
-    nodeReward,
-    epochIndex,
-    schedule,
+    minerRewardTHE: minerReward,
+    nipRewardTHE: nipReward,
+    totalRewardTHE: total,
+    epochIndex
   };
 }

@@ -1,42 +1,33 @@
 // src/rewards/rewards.ts
 // ---------------------------------------------------------------------------
-// Block reward application: miner + node income pool (NIP).
-// Uses emission model + epoch schedule from src/emissions/model.ts.
+// Rewards facade — wires emission math into ChainState accounts.
 // ---------------------------------------------------------------------------
 
-import type { Address, Amount } from "../types/primitives";
+import type { Address } from "../types/primitives";
 import type { ChainState } from "../ledger/state";
-import { creditAccount } from "../ledger/state";
-import { computeBlockRewards } from "../emissions/model";
+import { getOrCreateAccount } from "../ledger/state";
+import { computeEmissionForHeight } from "../emissions/model";
 
-// Internal pseudo-address for the Node Income Pool (NIP).
-// This is *not* a normal user wallet; BoT/Treasury will manage it.
-export const NODE_POOL_ADDRESS: Address = "NIP_POOL";
+// Fixed account ID for the Node Income Pool on L1.
+const NIP_ACCOUNT: Address = "NIP_POOL";
 
-export interface AppliedRewards {
-  readonly minerReward: Amount;
-  readonly nodeReward: Amount;
-  readonly epochIndex: number;
-}
+export { computeEmissionForHeight } from "../emissions/model";
 
-// Apply rewards for a given block height.
-//  • credits miner account
-//  • credits node pool account
-//  • returns the amounts applied (for sims / logging)
+/**
+ * Apply miner + Node Income Pool rewards for a given block height.
+ */
 export function applyBlockReward(
   state: ChainState,
   miner: Address,
   height: number
-): AppliedRewards {
-  const { minerReward, nodeReward, epochIndex } = computeBlockRewards(height);
+): void {
+  const { minerRewardTHE, nipRewardTHE } = computeEmissionForHeight(height);
 
-  if (minerReward > 0n) {
-    creditAccount(state, miner, minerReward);
-  }
+  // Credit miner
+  const minerAcct = getOrCreateAccount(state, miner);
+  minerAcct.balanceTHE += minerRewardTHE;
 
-  if (nodeReward > 0n) {
-    creditAccount(state, NODE_POOL_ADDRESS, nodeReward);
-  }
-
-  return { minerReward, nodeReward, epochIndex };
+  // Credit Node Income Pool
+  const nipAcct = getOrCreateAccount(state, NIP_ACCOUNT);
+  nipAcct.balanceTHE += nipRewardTHE;
 }
