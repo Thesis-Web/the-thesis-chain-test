@@ -1,42 +1,46 @@
-import { createEmptyChainState } from "../ledger/state";
-import type { Block, BlockHeader } from "../ledger/block";
-import { applyBlock } from "../ledger/block";
+// src/sims/simple-sim
+// ---------------------------------------------------------------------------
+// SIMPLE BLOCK SIM
+// ---------------------------------------------------------------------------
+//
+//  • Creates empty ChainState
+//  • Applies two blocks with payments + miner rewards
+//  • Prints final state
+// ---------------------------------------------------------------------------
+
+import { createEmptyChainState, getOrCreateAccount } from "../ledger/state";
+import { makeSimpleBlock, applyBlock } from "../ledger/block";
+import type { PaymentTx } from "../ledger/block";
 
 console.log("=== SIMPLE BLOCK SIM ===\n");
 
 const state = createEmptyChainState();
-const miner = "MINER_X";
 
-function makeHeader(
-  height: number,
-  prevHash: string | null
-): BlockHeader {
-  return {
-    height,
-    prevHash,
-    timestamp: Date.now(),
-    miner
-  };
-}
+// Seed some balances for demo
+const A = "ADDR_A";
+const B = "ADDR_B";
+const MINER = "MINER_X";
 
-function makeBlock(
-  height: number,
-  prevHash: string | null
-): Block {
-  return {
-    header: makeHeader(height, prevHash),
-    txs: []
-  };
-}
+getOrCreateAccount(state, A).balanceTHE = 1000n;
+getOrCreateAccount(state, B).balanceTHE = 0n;
 
-// GENESIS view
 console.log("Initial state:", {
   height: state.height,
   lastBlockHash: state.lastBlockHash
 });
 
-// Block 1
-const block1 = makeBlock(1, state.lastBlockHash);
+// BLOCK 1: A pays B 100
+const txs1: PaymentTx[] = [
+  {
+    txType: "PAYMENT",
+    from: A,
+    to: B,
+    amount: 100n
+  }
+];
+
+const block1 = makeSimpleBlock(1, state.lastBlockHash, MINER, txs1);
+
 console.log("\n>>> APPLY BLOCK 1");
 applyBlock(state, block1);
 console.log("After Block 1:", {
@@ -44,8 +48,18 @@ console.log("After Block 1:", {
   lastBlockHash: state.lastBlockHash
 });
 
-// Block 2
-const block2 = makeBlock(2, state.lastBlockHash);
+// BLOCK 2: B pays A 30
+const txs2: PaymentTx[] = [
+  {
+    txType: "PAYMENT",
+    from: B,
+    to: A,
+    amount: 30n
+  }
+];
+
+const block2 = makeSimpleBlock(2, state.lastBlockHash, MINER, txs2);
+
 console.log("\n>>> APPLY BLOCK 2");
 applyBlock(state, block2);
 console.log("After Block 2:", {
@@ -53,7 +67,7 @@ console.log("After Block 2:", {
   lastBlockHash: state.lastBlockHash
 });
 
-// Dump accounts
+// Dump final accounts
 console.log("\nAccounts:");
 for (const [addr, acct] of state.accounts.entries()) {
   console.log("  ", addr, acct);

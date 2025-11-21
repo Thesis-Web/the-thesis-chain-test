@@ -1,4 +1,5 @@
-// Basic primitive types used across the chain.
+// src/types/primitives
+// Basic primitive types for THE L1
 
 export type Address = string;
 export type Amount = bigint;
