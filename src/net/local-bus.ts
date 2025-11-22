@@ -1,70 +1,59 @@
 // src/net/local-bus.ts
 // ---------------------------------------------------------------------------
-// In-process "network bus" for sims
-//   - Peers register a handler
-//   - We can send unicast or broadcast NetMessage instances
-//
-// This mimics a very simple P2P network without sockets.
+// In-process P2P bus for THE
+//  - Peers register a handler(NetMessage)
+//  - send(from, to, msgWithoutFromPeerId)
+//  - broadcast(from, msgWithoutFromPeerId)
+// 
+// Uses a generic M extends NetMessage so that when callers construct a
+// literal with type: "INV_BLOCK" / "BLOCK" / "TX" / etc, TypeScript keeps
+// the full shape (height/hash/blockBytes/tx/...) rather than collapsing
+// to just { type: union }.
 // ---------------------------------------------------------------------------
 
 import type { NetMessage } from "./messages";
 
-type NetMessageHandler = (msg: NetMessage) => void;
+export type NetHandler = (msg: Readonly<NetMessage>) => void;
 
 export class LocalBus {
-  private readonly handlers = new Map<string, NetMessageHandler>();
+  private readonly peers = new Map<string, NetHandler>();
 
-  // Register or replace a peer's message handler
-  registerPeer(peerId: string, handler: NetMessageHandler): void {
-    this.handlers.set(peerId, handler);
+  registerPeer(id: string, handler: NetHandler): void {
+    this.peers.set(id, handler);
   }
 
-  // Unregister a peer (not used yet, but handy for later)
-  unregisterPeer(peerId: string): void {
-    this.handlers.delete(peerId);
+  unregisterPeer(id: string): void {
+    this.peers.delete(id);
   }
 
-  // Low-level: send a fully-formed message object
-  sendRaw(msg: NetMessage): void {
-    const targetHandler = this.handlers.get(msg.fromPeerId);
-    // NOTE: sendRaw assumes the handler will fan-out based on msg.type
-    // In practice, we usually want send() or broadcast().
-    if (!targetHandler) {
-      return;
+  private deliver(to: string, msg: NetMessage): void {
+    const handler = this.peers.get(to);
+    if (handler) {
+      // Freeze so handlers cannot mutate shared messages in-process.
+      handler(Object.freeze({ ...msg }));
     }
-    targetHandler(msg);
   }
 
-  // Unicast: from → to, with fromPeerId injected.
-  send(
-    fromPeerId: string,
-    toPeerId: string,
-    msg: Omit<NetMessage, "fromPeerId">
-  ): void {
-    const handler = this.handlers.get(toPeerId);
-    if (!handler) return;
-
-    const fullMsg: NetMessage = {
-      ...msg,
-      fromPeerId,
-    } as NetMessage;
-
-    handler(fullMsg);
+  /**
+   * Send a single message from → to.
+   *
+   * Callers provide a message without fromPeerId. We use a generic M
+   * so that the specific variant (INV_BLOCK / GET_BLOCK / BLOCK / TX / ...)
+   * is preserved in the type system.
+   */
+  send<M extends NetMessage>(from: string, to: string, msg: Omit<M, "fromPeerId">): void {
+    const full = { ...msg, fromPeerId: from } as M;
+    this.deliver(to, full);
   }
 
-  // Broadcast: fan-out to all peers except the sender.
-  broadcast(
-    fromPeerId: string,
-    msg: Omit<NetMessage, "fromPeerId">
-  ): void {
-    const fullMsg: NetMessage = {
-      ...msg,
-      fromPeerId,
-    } as NetMessage;
-
-    for (const [peerId, handler] of this.handlers.entries()) {
-      if (peerId === fromPeerId) continue;
-      handler(fullMsg);
+  /**
+   * Broadcast a message to all peers except the sender.
+   */
+  broadcast<M extends NetMessage>(from: string, msg: Omit<M, "fromPeerId">): void {
+    for (const [id] of this.peers) {
+      if (id === from) continue;
+      const full = { ...msg, fromPeerId: from } as M;
+      this.deliver(id, full);
     }
   }
 }

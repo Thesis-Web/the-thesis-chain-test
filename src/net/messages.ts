@@ -9,8 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import type { Hash } from "../types/primitives";
-import type { AnyTx } from "../ledger/tx";
-
+import type { AnyTx } from "../ledger/block";
 // Base shape for all wire messages
 export interface BaseNetMessage {
   readonly type: string;
