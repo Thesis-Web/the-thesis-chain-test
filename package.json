@@ -9,7 +9,8 @@
     "build": "tsc -p tsconfig.json",
     "simple-sim": "ts-node src/sims/simple-sim.ts",
     "pow-sim": "ts-node src/sims/pow-sim.ts",
-    "wire-sim": "ts-node src/sims/wire-sim.ts"
+    "wire-sim": "ts-node src/sims/wire-sim.ts",
+    "net-wire-sim": "ts-node src/sims/net-wire-sim.ts"
   },
   "keywords": [],
   "author": "",
