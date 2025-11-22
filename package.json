@@ -8,7 +8,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "simple-sim": "ts-node src/sims/simple-sim.ts",
-    "pow-sim": "ts-node src/sims/pow-sim.ts"
+    "pow-sim": "ts-node src/sims/pow-sim.ts",
+    "wire-sim": "ts-node src/sims/wire-sim.ts"
   },
   "keywords": [],
   "author": "",
