@@ -1,34 +1,37 @@
 // src/ledger/block.ts
 // ---------------------------------------------------------------------------
-// THE Ledger – Block model, Merkle integration, vault ops, tx apply,
-// miner rewards, and consensus v0.
+// Block types + application (THE v1 scaffold + Consensus v0)
+// ---------------------------------------------------------------------------
+//
+// Responsibilities:
+//   - Define PaymentTx + AnyTx
+//   - Define BlockHeader / Block types
+//   - Compute a deterministic SHA-256 block hash over the header
+//   - Compute a Merkle bodyRoot over serialized txs
+//   - Apply a block to ChainState (txs + rewards + metadata)
+//   - Consensus v0 helpers:
+//       * validateBlockHeader(state, block)
+//       * applyBlockValidated(state, block)
 // ---------------------------------------------------------------------------
 
 import type { Address, Hash, Amount } from "../types/primitives";
 import type { ChainState } from "./state";
-import {
-  creditAccount,
-  debitAccount,
-} from "./state";
-
-import {
-  applyBlockReward,
-} from "../rewards/rewards";
-
+import { creditAccount, debitAccount } from "./state";
+import { applyBlockReward } from "../rewards/rewards";
 import type {
   VaultCreateTx,
   VaultDepositTx,
   VaultWithdrawTx,
 } from "./tx";
-
-import {
-  buildMerkleRootFromStrings,
-} from "../merkle/merkle";
+import { computeMerkleRoot } from "../merkle/merkle";
+import { encodeString, encodeBigInt, encodeList } from "../serialization/rlp-lite";
+import * as crypto from "crypto";
 
 // ---------------------------------------------------------------------------
-// Tx union
+// Transaction types (v1)
 // ---------------------------------------------------------------------------
 
+// Simple payment tx for the v1 sim.
 export interface PaymentTx {
   readonly txType: "PAYMENT";
   readonly from: Address;
@@ -36,6 +39,7 @@ export interface PaymentTx {
   readonly amount: Amount;
 }
 
+// Union of all tx types we currently support on L1.
 export type AnyTx =
   | PaymentTx
   | VaultCreateTx
@@ -43,49 +47,66 @@ export type AnyTx =
   | VaultWithdrawTx;
 
 // ---------------------------------------------------------------------------
-// Block + Header definitions
+// Block types
 // ---------------------------------------------------------------------------
 
+// Minimal block header.
 export interface BlockHeader {
   height: number;
   prevHash: Hash | null;
   timestamp: number;
   miner: Address;
 
-  // THE Merkle root (N-ary)
+  // Merkle root of txs (RLP-lite leaves, SHA-256 tree).
   bodyRoot?: Hash;
 
-  // Computed by computeBlockHash
+  // NOTE: hash is derived, not part of the signed header yet.
   hash?: Hash;
 }
 
+// Block = header + tx list.
 export interface Block {
   header: BlockHeader;
   txs: AnyTx[];
 }
 
 // ---------------------------------------------------------------------------
-// Hash helper (deterministic, not crypto – PoW uses real SHA256 in pow.ts)
+// Header hashing (canonical SHA-256 over serialized header)
+// ---------------------------------------------------------------------------
+//
+// For now we serialize the header as a simple RLP-like list:
+//
+//   [ "HEADER",
+//     height,
+//     prevHash || "",
+//     timestamp,
+//     miner,
+//     bodyRoot || ""
+//   ]
+//
+// This is stable and compatible with future extensions.
 // ---------------------------------------------------------------------------
 
-export function computeBlockHash(header: BlockHeader): Hash {
-  const data = [
-    header.height.toString(),
-    header.prevHash ?? "",
-    header.timestamp.toString(),
-    header.miner,
-    header.bodyRoot ?? "",
-  ].join("|");
+function encodeHeaderForHash(header: BlockHeader): Buffer {
+  const parts = [
+    encodeString("HEADER"),
+    encodeBigInt(BigInt(header.height)),
+    encodeString(header.prevHash ?? ""),
+    encodeBigInt(BigInt(header.timestamp)),
+    encodeString(header.miner),
+    encodeString(header.bodyRoot ?? ""),
+  ];
+  return encodeList(parts);
+}
 
-  let h = 0;
-  for (let i = 0; i < data.length; i++) {
-    h = (h * 31 + data.charCodeAt(i)) >>> 0;
-  }
-  return `HASH_${h.toString(16).padStart(8, "0")}`;
+export function computeBlockHash(header: BlockHeader): Hash {
+  const bytes = encodeHeaderForHash(header);
+  const hashBuf = crypto.createHash("sha256").update(bytes).digest("hex");
+  return (`0x${hashBuf}`) as Hash;
 }
 
 // ---------------------------------------------------------------------------
-// Vault ops
+// Internal helpers for vault ops
 // ---------------------------------------------------------------------------
 
 function applyVaultCreate(state: ChainState, tx: VaultCreateTx): void {
@@ -101,144 +122,192 @@ function applyVaultCreate(state: ChainState, tx: VaultCreateTx): void {
 
 function applyVaultDeposit(state: ChainState, tx: VaultDepositTx): void {
   const vault = state.vaults.get(tx.vaultId);
-  if (!vault) throw new Error(`Vault deposit: missing vault ${tx.vaultId}`);
-  if (tx.amount <= 0n) throw new Error("VaultDeposit.amount must be positive");
+  if (!vault) {
+    throw new Error(`Vault not found for deposit: ${tx.vaultId}`);
+  }
+  if (tx.amount <= 0n) {
+    throw new Error("VaultDepositTx.amount must be positive");
+  }
   vault.balanceTHE += tx.amount;
 }
 
 function applyVaultWithdraw(state: ChainState, tx: VaultWithdrawTx): void {
   const vault = state.vaults.get(tx.vaultId);
-  if (!vault) throw new Error(`Vault withdraw: missing vault ${tx.vaultId}`);
-  if (tx.amount <= 0n) throw new Error("VaultWithdraw.amount must be positive");
-  if (vault.balanceTHE < tx.amount) throw new Error("Vault underflow");
+  if (!vault) {
+    throw new Error(`Vault not found for withdraw: ${tx.vaultId}`);
+  }
+  if (tx.amount <= 0n) {
+    throw new Error("VaultWithdrawTx.amount must be positive");
+  }
+  if (vault.balanceTHE < tx.amount) {
+    throw new Error(
+      `VaultWithdrawTx: insufficient balance in vault ${tx.vaultId}`,
+    );
+  }
   vault.balanceTHE -= tx.amount;
 }
 
 // ---------------------------------------------------------------------------
-// Tx application (single entry point)
+// Tx → Merkle-leaf serialization (RLP-lite)
+// ---------------------------------------------------------------------------
+//
+// Each tx type is encoded as a small list:
+//
+//   PAYMENT:
+//     ["PAYMENT", from, to, amount]
+//
+//   VAULT_CREATE:
+//     ["VAULT_CREATE", vaultId, owner]
+//
+//   VAULT_DEPOSIT:
+//     ["VAULT_DEPOSIT", vaultId, amount]
+//
+//   VAULT_WITHDRAW:
+//     ["VAULT_WITHDRAW", vaultId, amount]
+// ---------------------------------------------------------------------------
+
+function encodeTxForMerkle(tx: AnyTx): Buffer {
+  switch (tx.txType) {
+    case "PAYMENT":
+      return encodeList([
+        encodeString("PAYMENT"),
+        encodeString(tx.from),
+        encodeString(tx.to),
+        encodeBigInt(tx.amount),
+      ]);
+
+    case "VAULT_CREATE":
+      return encodeList([
+        encodeString("VAULT_CREATE"),
+        encodeString(tx.vaultId),
+        encodeString(tx.owner),
+      ]);
+
+    case "VAULT_DEPOSIT":
+      return encodeList([
+        encodeString("VAULT_DEPOSIT"),
+        encodeString(tx.vaultId),
+        encodeBigInt(tx.amount),
+      ]);
+
+    case "VAULT_WITHDRAW":
+      return encodeList([
+        encodeString("VAULT_WITHDRAW"),
+        encodeString(tx.vaultId),
+        encodeBigInt(tx.amount),
+      ]);
+
+    default: {
+      const _exhaustive: never = tx;
+      throw new Error(`encodeTxForMerkle: unknown txType ${(tx as any).txType}`);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Tx application (v1)
+// ---------------------------------------------------------------------------
+//
+// ALL ledger transactions must flow through here.
+// Right now:
+//   • PAYMENT
+//   • VAULT_CREATE / VAULT_DEPOSIT / VAULT_WITHDRAW
 // ---------------------------------------------------------------------------
 
 function applyTx(state: ChainState, tx: AnyTx): void {
   switch (tx.txType) {
     case "PAYMENT": {
+      // Simple account → account transfer
       debitAccount(state, tx.from, tx.amount);
       creditAccount(state, tx.to, tx.amount);
       return;
     }
-    case "VAULT_CREATE": return applyVaultCreate(state, tx);
-    case "VAULT_DEPOSIT": return applyVaultDeposit(state, tx);
-    case "VAULT_WITHDRAW": return applyVaultWithdraw(state, tx);
 
-    default:
-      const _exhaustive: never = tx;
-      throw new Error(`Unknown tx: ${(tx as any).txType}`);
-  }
-}
+    case "VAULT_CREATE": {
+      applyVaultCreate(state, tx);
+      return;
+    }
 
+    case "VAULT_DEPOSIT": {
+      applyVaultDeposit(state, tx);
+      return;
+    }
 
-// ---------------------------------------------------------------------------
-// Merkle leaf encoding for THE txs
-// ---------------------------------------------------------------------------
-//
-// We cannot JSON.stringify BigInt, so we define a stable, human-readable,
-// pipe-separated encoding. This is THE's canonical "tx leaf" form for
-// Merkle roots in sims.
-// ---------------------------------------------------------------------------
-
-function txToMerkleLeaf(tx: AnyTx): string {
-  switch (tx.txType) {
-    case "PAYMENT":
-      return [
-        "PAYMENT",
-        tx.from,
-        tx.to,
-        tx.amount.toString(), // bigint → decimal string
-      ].join("|");
-
-    case "VAULT_CREATE":
-      return [
-        "VAULT_CREATE",
-        tx.vaultId,
-        tx.owner,
-      ].join("|");
-
-    case "VAULT_DEPOSIT":
-      return [
-        "VAULT_DEPOSIT",
-        tx.vaultId,
-        tx.amount.toString(), // bigint → decimal string
-      ].join("|");
-
-    case "VAULT_WITHDRAW":
-      return [
-        "VAULT_WITHDRAW",
-        tx.vaultId,
-        tx.amount.toString(), // bigint → decimal string
-      ].join("|");
+    case "VAULT_WITHDRAW": {
+      applyVaultWithdraw(state, tx);
+      return;
+    }
 
     default: {
       const _exhaustive: never = tx;
-      throw new Error(`Unknown txType in txToMerkleLeaf: ${(tx as any).txType}`);
+      throw new Error(`Unknown txType in applyTx: ${(tx as any).txType}`);
     }
   }
 }
 
 // ---------------------------------------------------------------------------
-// Block apply (NO validation)
+// Block application (no validation)
 // ---------------------------------------------------------------------------
 //
-// Order matters:
-//
-//   1. Apply all txs
-//   2. Compute Merkle root of body
-//   3. Miner+Node rewards (THE)
-//   4. Compute header.hash *after* bodyRoot exists
-//   5. Update chain state height + lastBlockHash
-//
+// applyBlock assumes the block header is valid relative to the current
+// ChainState. Consensus v0 wrappers are responsible for calling validation
+// first.
 // ---------------------------------------------------------------------------
 
 export function applyBlock(state: ChainState, block: Block): void {
   // Apply txs
-  for (const tx of block.txs) applyTx(state, tx);
+  for (const tx of block.txs) {
+    applyTx(state, tx);
+  }
 
-  // Compute THE-style N-ary Merkle root
-  const leafStrings = block.txs.map(txToMerkleLeaf);
-  const bodyRoot = buildMerkleRootFromStrings(leafStrings, 4);
-  block.header.bodyRoot = bodyRoot ?? undefined;
-
-  // Miner + Node Income Pool reward
+  // Miner + node rewards
   applyBlockReward(state, block.header.miner, block.header.height);
 
-  // Now compute hash (covers bodyRoot!)
+  // Compute bodyRoot from txs (can be empty list).
+  const leafBuffers = block.txs.map(encodeTxForMerkle);
+  block.header.bodyRoot = computeMerkleRoot(leafBuffers);
+
+  // Update header hash + chain metadata
   const hash = computeBlockHash(block.header);
   block.header.hash = hash;
 
-  // Update chain meta
   state.height = block.header.height;
   state.lastBlockHash = hash;
 }
 
 // ---------------------------------------------------------------------------
-// Consensus v0 — sequential chain with prevHash linking
+// Consensus v0 — header validation + safe apply
+// ---------------------------------------------------------------------------
+//
+// This is an "honest single-node" consensus layer:
+//   - strictly sequential heights
+//   - prevHash must match lastBlockHash
+//   - special rule for the first block
+//
+// No PoW, no signatures, no fork-choice yet.
 // ---------------------------------------------------------------------------
 
 export function validateBlockHeader(state: ChainState, block: Block): void {
   const { height, prevHash } = block.header;
 
-  // Genesis rule
+  // First block after empty state.
   if (state.height === 0) {
-    if (height !== 1) throw new Error(`First block height must be 1`);
-    if (prevHash !== null) throw new Error(`First block prevHash must be null`);
+    if (height !== 1) {
+      throw new Error(`Invalid height for first block: got ${height}, expected 1`);
+    }
+    if (prevHash !== null) {
+      throw new Error(`First block must have prevHash = null, got ${prevHash}`);
+    }
     return;
   }
 
-  // Strict height increment
+  // Subsequent blocks must be strictly sequential.
   const expectedHeight = state.height + 1;
   if (height !== expectedHeight) {
     throw new Error(`Invalid height: got ${height}, expected ${expectedHeight}`);
   }
 
-  // prevHash must match
+  // And chain-linked by prevHash.
   if (prevHash !== state.lastBlockHash) {
     throw new Error(
       `Invalid prevHash: got ${prevHash}, expected ${state.lastBlockHash}`,
@@ -246,14 +315,14 @@ export function validateBlockHeader(state: ChainState, block: Block): void {
   }
 }
 
-// Safe wrapper: validate then apply
+// Convenience wrapper that validates before applying.
 export function applyBlockValidated(state: ChainState, block: Block): void {
   validateBlockHeader(state, block);
   applyBlock(state, block);
 }
 
 // ---------------------------------------------------------------------------
-// Helper for sims
+// Helper for sims: build a simple block.
 // ---------------------------------------------------------------------------
 
 export function makeSimpleBlock(
