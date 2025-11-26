@@ -24,7 +24,12 @@ export const BASE_MINER_REWARD_THE: readonly bigint[] = [
 
 // Node Income Pool share in basis points (1/100 of a percent).
 // 30% of block reward to NIP, 70% directly to the winning miner.
-export const NIP_SHARE_BASIS_POINTS = 3_000; // 30%
+// Node Income Pool share in basis points (1/100 of a percent).
+// NOTE (v0): Per specs/REWARDS_EMISSIONS.md & specs/NODE_TIERS.md, steady-state node
+// rewards are funded from fees/treasury, not from the Mining Escrow base.
+// During this L1 dev phase, we set the emission-funded NIP share to 0.
+// A future fee-funded Node Income Pool will be wired separately.
+export const NIP_SHARE_BASIS_POINTS = 0; // 0% from emission; NIP is fee-funded in later phases
 
 // Helper to clamp an epoch index into the defined schedule range.
 export function clampEpochIndex(epochIndex: number): number {

@@ -11,6 +11,13 @@
 // This module is intentionally standalone. It does **not** mutate ChainState;
 // block.ts / node.ts / sims decide when and how to call it.
 //
+
+// Difficulty governor v0 wiring.
+// This is kept optional and stateless: sims / node code decide when/how to
+// call the governor to update PowState.target.
+export { adjustDifficultyTarget, DEFAULT_DIFFICULTY_CONFIG } from "../emissions/difficulty-governor";
+
+
 // THE-specific bits wired in here:
 //   - Target block time is taken from emissions/params (4 minutes)
 //   - Difficulty is expressed as a target in the 2^256 hash space
