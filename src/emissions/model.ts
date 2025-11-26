@@ -3,7 +3,8 @@
 // ---------------------------------------------------------------------------
 // Emission model for miner + Node Income Pool as a function of block height.
 // This wires the dev-phase (170 days) schedule from specs/REWARDS_EMISSIONS.md
-// together with the long-term 10 → 20 → 40 THE schedule from 090-miners-and-nodes.
+// together with the long-term 10 → 20 → 40 THE schedule from 090-miners-and-nodes,
+// taking its parameters from the EMISSION_PARAMS_V1 registry.
 // ---------------------------------------------------------------------------
 
 import type { Amount } from "../types/primitives";
@@ -14,6 +15,7 @@ import {
   NIP_SHARE_BASIS_POINTS,
   clampEpochIndex
 } from "./params";
+import { EMISSION_PARAMS_V1 } from "../params/registry";
 
 export interface EmissionBreakdown {
   readonly minerRewardTHE: Amount;
@@ -24,7 +26,7 @@ export interface EmissionBreakdown {
 }
 
 // ---------------------------------------------------------------------------
-// Dev-phase constants (from specs/REWARDS_EMISSIONS.md)
+// Dev-phase constants (from specs/REWARDS_EMISSIONS.md via EMISSION_PARAMS_V1)
 // ---------------------------------------------------------------------------
 // - Duration: 170 days
 // - Target mining issuance: 1,260,000 THE (checked via sims, not enforced here)
@@ -34,21 +36,21 @@ export interface EmissionBreakdown {
 // ---------------------------------------------------------------------------
 
 const SECONDS_PER_DAY = 24 * 60 * 60;
-const DEV_PHASE_DAYS = 170;
+const DEV_PHASE_DAYS = EMISSION_PARAMS_V1.devPhase.days;
 
 // Number of L1 blocks in the dev phase, assuming BLOCK_TIME_SECONDS is stable.
-// This is intentionally computed, not hard-coded, so changes to BLOCK_TIME_SECONDS
-// in params.ts automatically propagate.
+// This is intentionally computed, not hard-coded, so changes to
+// EMISSION_PARAMS_V1.blockTimeSeconds automatically propagate.
 export const DEV_PHASE_BLOCKS: number = Math.floor(
   (DEV_PHASE_DAYS * SECONDS_PER_DAY) / BLOCK_TIME_SECONDS
 );
 
 // "Up to 10 THE" per mining block during dev phase.
-const DEV_PHASE_MAX_BLOCK_REWARD_THE: Amount = 10n;
+const DEV_PHASE_MAX_BLOCK_REWARD_THE: Amount = EMISSION_PARAMS_V1.devPhase.maxBlockRewardTHE;
 
 // 90% miner / 10% Node Service Reward during dev phase.
-const DEV_PHASE_MINER_SHARE_BASIS_POINTS = 9_000; // 90%
-const DEV_PHASE_NIP_SHARE_BASIS_POINTS = 1_000;   // 10%
+const DEV_PHASE_MINER_SHARE_BASIS_POINTS = EMISSION_PARAMS_V1.devPhase.minerShareBps;
+const DEV_PHASE_NIP_SHARE_BASIS_POINTS = EMISSION_PARAMS_V1.devPhase.nipShareBps;
 
 // Internal helper: compute emission for a dev-phase block.
 function computeDevPhaseEmission(height: number): EmissionBreakdown {
@@ -56,8 +58,6 @@ function computeDevPhaseEmission(height: number): EmissionBreakdown {
     throw new Error(`computeEmissionForHeight: negative height ${height}`);
   }
 
-  // Clamp to "up to 10 THE". We do not attempt to encode EU-display clamping
-  // here; that is a wallet/oracle concern.
   const base: Amount = DEV_PHASE_MAX_BLOCK_REWARD_THE;
 
   const totalBasisPoints =
