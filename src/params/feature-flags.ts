@@ -1,10 +1,12 @@
 // TARGET: chain src/params/feature-flags.ts
-// Pack 14.4 — Add powEnforcement flag
+// Pack 14.5 — Feature flags for consensus + split shadow
 
 export interface FeatureFlags {
   readonly powEnforcement: boolean;
+  readonly enableSplitShadowMode: boolean;
 }
 
 export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
-  powEnforcement: true
+  powEnforcement: true,
+  enableSplitShadowMode: true
 };

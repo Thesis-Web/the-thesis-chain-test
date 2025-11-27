@@ -1,65 +1,96 @@
 // TARGET: chain src/consensus/split-shadow.ts
 // src/consensus/split-shadow.ts
 // ---------------------------------------------------------------------------
-// Split Engine – SHADOW MODE hook
+// Split Shadow Helpers (v0)
 //
-// This module runs the SplitEngine without mutating balances or supply.
-// It is a pure prediction engine used by consensus to determine:
-//   • cumulativeFactor
-//   • next split decision
+// This module provides a thin wrapper around the split engine orchestrator
+// in src/splits/split-orchestrator.ts so that consensus and sims can
+// *observe* split decisions in SHADOW MODE:
 //
-// Controlled by FeatureFlags.splitShadow.
+//   • never mutates ChainState
+//   • never applies splits directly
+//   • only returns the next SplitEngineState + decision
+//
+// It matches the API expected by src/consensus/split-shadow-hook.ts:
+//   - SplitShadowConfig
+//   - SplitShadowResult
+//   - evaluateSplitInShadow(cfg, input)
 // ---------------------------------------------------------------------------
 
 import type { FeatureFlags } from "../params/feature-flags";
-import type { SplitEngineState, SplitDecision } from "../splits/split-orchestrator";
-import { runSplitEngine } from "../splits/split-orchestrator";
+import type { SplitPolicyParams, SplitDecision } from "../splits/split-policy";
+import {
+  initSplitEngineState,
+  stepSplitEngine,
+  type SplitEngineState
+} from "../splits/split-orchestrator";
 
-export interface SplitHookEnv {
+export interface SplitShadowConfig {
   readonly flags: FeatureFlags;
+  readonly policy?: SplitPolicyParams;
 }
 
-export interface SplitHookContext {
+export interface SplitShadowInput {
   readonly height: number;
-  readonly thePerEuPrice: number | null; // oracle wiring later
-}
-
-export interface SplitHookResult {
-  readonly nextEngineState: SplitEngineState;
-  readonly decision: SplitDecision;
+  readonly thePerEuPrice: number | null;
+  readonly prevEngineState?: SplitEngineState;
 }
 
 /**
- * SHADOW MODE: never mutate balances, never apply a real split.
+ * Result shape used by split-shadow-hook and sims.
+ *
+ * appliedInConsensus is always false in v0: this layer NEVER mutates
+ * balances or consensus state. It only reports what the engine *would* do.
  */
-export function runSplitShadowHook(
-  env: SplitHookEnv,
-  ctx: SplitHookContext,
-  prev: SplitEngineState
-): SplitHookResult {
+export interface SplitShadowResult {
+  readonly nextEngineState: SplitEngineState;
+  readonly decision: SplitDecision;
+  readonly appliedInConsensus: boolean;
+}
 
-  // NEW flag name (Pack 14.4)
-  if (!env.flags.splitShadow) {
-    // If disabled, pass through unchanged.
+/**
+ * Evaluate the split engine in SHADOW MODE for a single height.
+ *
+ * - If no previous engine state is provided, initSplitEngineState() is used.
+ * - The policy is taken from cfg.policy, or DEFAULT_SPLIT_POLICY inside
+ *   stepSplitEngine via its own default behavior.
+ * - FeatureFlags.enableSplitShadowMode is honored as a gate: if disabled,
+ *   we simply pass through the previous state and return a "no split" decision.
+ */
+export function evaluateSplitInShadow(
+  cfg: SplitShadowConfig,
+  input: SplitShadowInput
+): SplitShadowResult {
+  const { flags, policy } = cfg;
+
+  // If shadow mode is disabled, pass through unchanged state and a
+  // "no split" decision. We don't try to manufacture a fake SplitDecision
+  // here; instead, we simply avoid calling the engine when disabled.
+  if (!flags.enableSplitShadowMode) {
+    const prevState = input.prevEngineState ?? initSplitEngineState();
+
     return {
-      nextEngineState: prev,
+      nextEngineState: prevState,
       decision: {
         shouldSplit: false,
-        reason: "shadow-disabled"
-      }
+        reason: "shadow-disabled",
+        factor: null
+      },
+      appliedInConsensus: false
     };
   }
 
-  // We run the orchestrator in shadow=true mode.
-  const { nextState, decision } = runSplitEngine({
-    height: ctx.height,
-    thePerEuPrice: ctx.thePerEuPrice,
-    prevState: prev,
-    shadow: true
+  const prevState = input.prevEngineState ?? initSplitEngineState();
+
+  const { state, decision } = stepSplitEngine(prevState, {
+    height: input.height,
+    thePerEuPrice: input.thePerEuPrice,
+    policy
   });
 
   return {
-    nextEngineState: nextState,
-    decision
+    nextEngineState: state,
+    decision,
+    appliedInConsensus: false
   };
 }
