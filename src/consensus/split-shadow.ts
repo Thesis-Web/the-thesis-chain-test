@@ -1,90 +1,65 @@
 // TARGET: chain src/consensus/split-shadow.ts
 // src/consensus/split-shadow.ts
 // ---------------------------------------------------------------------------
-// Split "shadow mode" helpers (v0)
+// Split Engine – SHADOW MODE hook
 //
-// This module provides pure helper utilities for consensus code or sims that
-// want to *observe* what the split engine would do at a given height + price,
-// without mutating balances or altering supply. It is designed so that it can
-// be imported into block processing logic once that code is available, but does
-// not depend on any concrete ChainState types itself.
+// This module runs the SplitEngine without mutating balances or supply.
+// It is a pure prediction engine used by consensus to determine:
+//   • cumulativeFactor
+//   • next split decision
+//
+// Controlled by FeatureFlags.splitShadow.
 // ---------------------------------------------------------------------------
 
 import type { FeatureFlags } from "../params/feature-flags";
-import {
-  DEFAULT_SPLIT_POLICY,
-  type SplitPolicyParams,
-  type SplitDecision
-} from "../splits/split-policy";
-import {
-  initSplitEngineState,
-  stepSplitEngine,
-  type SplitEngineState
-} from "../splits/split-orchestrator";
+import type { SplitEngineState, SplitDecision } from "../splits/split-orchestrator";
+import { runSplitEngine } from "../splits/split-orchestrator";
 
-export interface SplitShadowConfig {
+export interface SplitHookEnv {
   readonly flags: FeatureFlags;
-  readonly policy?: SplitPolicyParams;
 }
 
-export interface SplitShadowInput {
+export interface SplitHookContext {
   readonly height: number;
-  readonly thePerEuPrice: number | null;
-  readonly prevEngineState?: SplitEngineState;
+  readonly thePerEuPrice: number | null; // oracle wiring later
 }
 
-export interface SplitShadowResult {
+export interface SplitHookResult {
   readonly nextEngineState: SplitEngineState;
   readonly decision: SplitDecision;
-  readonly appliedInConsensus: boolean;
 }
 
 /**
- * Run a single-height split evaluation in "shadow mode".
- *
- * If flags.enableSplitShadowMode is false, this is effectively a no-op that
- * maintains a neutral engine state and reports a "shadow_mode_disabled"
- * decision.
- *
- * If flags.enableSplitShadowMode is true, this computes the policy decision
- * using the split engine, but never insists that the caller mutate balances.
+ * SHADOW MODE: never mutate balances, never apply a real split.
  */
-export function evaluateSplitInShadow(
-  cfg: SplitShadowConfig,
-  input: SplitShadowInput
-): SplitShadowResult {
-  const { flags } = cfg;
+export function runSplitShadowHook(
+  env: SplitHookEnv,
+  ctx: SplitHookContext,
+  prev: SplitEngineState
+): SplitHookResult {
 
-  if (!flags.enableSplitShadowMode) {
-    const neutralState = input.prevEngineState ?? initSplitEngineState();
+  // NEW flag name (Pack 14.4)
+  if (!env.flags.splitShadow) {
+    // If disabled, pass through unchanged.
     return {
-      nextEngineState: neutralState,
+      nextEngineState: prev,
       decision: {
         shouldSplit: false,
-        factor: null,
-        reason: "shadow_mode_disabled"
-      },
-      appliedInConsensus: false
+        reason: "shadow-disabled"
+      }
     };
   }
 
-  const policy = cfg.policy ?? DEFAULT_SPLIT_POLICY;
-  const prev = input.prevEngineState ?? initSplitEngineState();
-
-  const { state: nextEngineState, decision } = stepSplitEngine(prev, {
-    height: input.height,
-    thePerEuPrice: input.thePerEuPrice,
-    policy
+  // We run the orchestrator in shadow=true mode.
+  const { nextState, decision } = runSplitEngine({
+    height: ctx.height,
+    thePerEuPrice: ctx.thePerEuPrice,
+    prevState: prev,
+    shadow: true
   });
 
-  // In v0 shadow mode, we *never* apply the split inside this helper. That
-  // must be an explicit decision in consensus code, guarded by both
-  // enableConsensusSplits and up-to-date invariants.
-  const appliedInConsensus = false;
-
   return {
-    nextEngineState,
-    decision,
-    appliedInConsensus
+    nextEngineState: nextState,
+    decision
   };
 }
