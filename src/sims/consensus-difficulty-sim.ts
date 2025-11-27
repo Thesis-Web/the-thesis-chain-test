@@ -1,7 +1,7 @@
 // TARGET: chain src/sims/consensus-difficulty-sim.ts
 // src/sims/consensus-difficulty-sim.ts
 // ---------------------------------------------------------------------------
-// Consensus + Difficulty + Split Shadow sim (Pack 11.3)
+// Consensus + Difficulty + Split Shadow sim (Pack 11.4, type-safe)
 // ---------------------------------------------------------------------------
 // This sim drives the real consensus pipeline end-to-end using the v0.1
 // consensus engine with:
@@ -28,7 +28,11 @@ function makeInitialLedger(): DemoLedger {
   return { totalEmission: 0 };
 }
 
-function applyDemoLedger(prev: DemoLedger, _block: Block, emission: EmissionBreakdown): DemoLedger {
+function applyDemoLedger(
+  prev: DemoLedger,
+  _block: Block,
+  emission: EmissionBreakdown
+): DemoLedger {
   // For now we just accumulate the totalRewardTHE as a number for logging.
   const total = Number(emission.totalRewardTHE);
   return { totalEmission: prev.totalEmission + total };
@@ -51,7 +55,7 @@ function makeDummyBlock(
 }
 
 function runSim(): void {
-  console.log("=== CONSENSUS + DIFFICULTY + SPLIT SHADOW SIM (Pack 11.3) ===");
+  console.log("=== CONSENSUS + DIFFICULTY + SPLIT SHADOW SIM (Pack 11.4) ===");
 
   let state: ChainState<DemoLedger> = makeGenesisState(makeInitialLedger());
   const env = makeConsensusEnv();
@@ -72,14 +76,9 @@ function runSim(): void {
     const effDelta = Math.max(1, timestampSec - prevTs);
     const ratio = effDelta / TARGET_BLOCK_TIME_SEC;
 
-    // Apply consensus.
-    const result: ApplyBlockResult<DemoLedger> = applyBlock(env, state, block, {
-      applyLedgerFn: (prevLedger, blk) =>
-        applyDemoLedger(prevLedger, blk, result.emission) // will be overridden below
-    } as any);
-    // The above cast is a minor TS hack to keep the sim lightweight; in a real
-    // node we'd wire the ledger more strictly. For logging we can update the
-    // ledger after the fact using result.emission.
+    // Apply consensus (ledger is treated as inert here).
+    const result: ApplyBlockResult<DemoLedger> = applyBlock(env, state, block);
+
     const emission = result.emission;
     const nextLedger = applyDemoLedger(state.ledger, block, emission);
 
