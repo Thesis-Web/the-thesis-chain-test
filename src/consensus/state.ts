@@ -1,9 +1,9 @@
 // TARGET: chain src/consensus/state.ts
-// Pack 10 — Consensus State with Difficulty integrated
+// Pack 10.1 — Consensus State with Difficulty integrated (aligned to existing split engine)
 
 import type { Block } from "./block";
-import type { SplitEngineState } from "../splits/engine-types";
-import { INITIAL_ENGINE_STATE } from "../splits/engine-initial";
+import type { SplitEngineState } from "../splits/split-engine";
+import { INITIAL_ENGINE_STATE } from "../splits/split-engine";
 import type { DifficultyState } from "./difficulty-governor";
 import { INITIAL_DIFFICULTY_STATE } from "./difficulty-governor";
 
