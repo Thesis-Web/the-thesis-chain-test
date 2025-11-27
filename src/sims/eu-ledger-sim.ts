@@ -17,7 +17,7 @@
 import { createEmptyChainState, creditAccount } from "../ledger/state";
 import {
   createVault,
-  depositIntoVault,
+  depositToVault,
   type VaultId
 } from "../ledger/vault";
 import {
@@ -48,7 +48,7 @@ function runSim(): void {
   // 2) Create a vault and deposit THE into it.
   const vault = createVault(chain.vaults, vaultId, owner);
   const vaultDeposit: Amount = 500n;
-  depositIntoVault(chain.vaults, vaultId, vaultDeposit);
+  depositToVault(chain.vaults, vaultId, vaultDeposit);
 
   // 3) Create an EU registry and register one certificate bound to this vault.
   const registry = createEmptyEuRegistry();
