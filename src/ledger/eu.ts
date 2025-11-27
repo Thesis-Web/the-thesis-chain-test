@@ -19,7 +19,7 @@
 // ---------------------------------------------------------------------------
 
 import type { Address } from "../types/primitives";
-import type { VaultId, VaultMap } from "./vault";
+import type { VaultId } from "./vault";
 import type { ChainState } from "./state";
 
 // ---------------------------------------------------------------------------
@@ -64,7 +64,7 @@ export function createEmptyEuRegistry(): EuRegistry {
 }
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Internal helpers
 // ---------------------------------------------------------------------------
 
 /**
@@ -76,6 +76,42 @@ function assertBackingVaultExists(state: ChainState, vaultId: VaultId): void {
   if (!vault) {
     throw new Error(`EU: backing vault does not exist: ${vaultId}`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Public helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Get a single EU certificate by id (if present).
+ */
+export function getEuCertificate(
+  registry: EuRegistry,
+  id: EuCertificateId
+): EuCertificate | undefined {
+  return registry.byId.get(id);
+}
+
+/**
+ * Convenience: check whether a certificate is ACTIVE.
+ */
+export function isEuActive(
+  registry: EuRegistry,
+  id: EuCertificateId
+): boolean {
+  const cert = registry.byId.get(id);
+  return cert?.status === "ACTIVE";
+}
+
+/**
+ * Convenience: check whether a certificate is REDEEMED.
+ */
+export function isEuRedeemed(
+  registry: EuRegistry,
+  id: EuCertificateId
+): boolean {
+  const cert = registry.byId.get(id);
+  return cert?.status === "REDEEMED";
 }
 
 /**
@@ -160,6 +196,8 @@ export function getEuCertificatesForOwner(
  *
  *   • Every EU.backingVaultId must exist in state.vaults.
  *   • No ACTIVE EU certificates share the same backing vault.
+ *   • For ACTIVE certs, the vault owner must match cert.owner.
+ *   • For ACTIVE certs, the backing vault must have non-zero THE balance.
  *
  * This is a runtime check intended for sims and internal sanity, not something
  * that should run in a hot path of block validation.
@@ -171,17 +209,33 @@ export function assertEuInvariants(
   const activeVaults = new Set<VaultId>();
 
   for (const cert of registry.byId.values()) {
-    // 1) backing vault must exist
-    assertBackingVaultExists(state, cert.backingVaultId);
+    const vault = state.vaults.get(cert.backingVaultId);
+    if (!vault) {
+      throw new Error(`EU invariant violation: missing backing vault ${cert.backingVaultId}`);
+    }
 
-    // 2) active EU certificates must not share a backing vault
     if (cert.status === "ACTIVE") {
+      // 1) active EU certificates must not share a backing vault
       if (activeVaults.has(cert.backingVaultId)) {
         throw new Error(
           `EU invariant violation: multiple ACTIVE certs bound to vault ${cert.backingVaultId}`
         );
       }
       activeVaults.add(cert.backingVaultId);
+
+      // 2) vault owner must match EU owner
+      if (vault.owner !== cert.owner) {
+        throw new Error(
+          `EU invariant violation: vault owner ${vault.owner} does not match EU owner ${cert.owner} for cert ${cert.id}`
+        );
+      }
+
+      // 3) backing vault must have non-zero THE balance
+      if (vault.balanceTHE === 0n) {
+        throw new Error(
+          `EU invariant violation: ACTIVE EU ${cert.id} bound to empty vault ${cert.backingVaultId}`
+        );
+      }
     }
   }
 }
