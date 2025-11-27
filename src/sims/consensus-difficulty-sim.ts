@@ -1,5 +1,5 @@
 // TARGET: chain src/sims/consensus-difficulty-sim.ts
-// Pack 11.1 — Consensus + Difficulty sim (aligned, no full ledger dump)
+// Pack 11.2 — Consensus + Difficulty sim (aligned to orchestrator-based split engine)
 
 import { makeGenesisState } from "../consensus/state";
 import { makeConsensusEnv, applyBlock } from "../consensus/chain";
@@ -32,7 +32,7 @@ function makeDummyBlock(
 }
 
 function runSim(): void {
-  console.log("=== CONSENSUS + DIFFICULTY SIM (Pack 11.1) ===");
+  console.log("=== CONSENSUS + DIFFICULTY SIM (Pack 11.2) ===");
 
   let state: ChainState<DemoLedger> = makeGenesisState(makeInitialLedger());
   const env = makeConsensusEnv(applyDemoLedger);
