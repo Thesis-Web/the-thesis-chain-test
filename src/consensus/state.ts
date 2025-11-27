@@ -1,16 +1,11 @@
 // TARGET: chain src/consensus/state.ts
-// src/consensus/state.ts
-// ---------------------------------------------------------------------------
-// ChainState definition for the L1 chain (v0 consensus skeleton).
-//
-// This module defines a minimal, generic ChainState that tracks only consensus-
-// relevant metadata plus an opaque ledger state. The concrete structure of the
-// ledger is delegated to the ledger layer and injected via type parameter.
-// ---------------------------------------------------------------------------
+// Pack 10 — Consensus State with Difficulty integrated
 
 import type { Block } from "./block";
-import type { SplitEngineState } from "../splits/split-orchestrator";
-import { initSplitEngineState } from "../splits/split-orchestrator";
+import type { SplitEngineState } from "../splits/engine-types";
+import { INITIAL_ENGINE_STATE } from "../splits/engine-initial";
+import type { DifficultyState } from "./difficulty-governor";
+import { INITIAL_DIFFICULTY_STATE } from "./difficulty-governor";
 
 export interface ChainState<LState = unknown> {
   readonly height: number;
@@ -18,20 +13,16 @@ export interface ChainState<LState = unknown> {
   readonly tipBlock: Block | null;
   readonly ledger: LState;
   readonly splitEngineState: SplitEngineState;
+  readonly difficulty: DifficultyState;
 }
 
-/**
- * Initialize a new ChainState from an initial ledger snapshot.
- *
- * The initial height is set to -1 so that the first accepted block is expected
- * to have height 0.
- */
-export function initChainState<LState>(initialLedger: LState): ChainState<LState> {
+export function makeGenesisState<LState>(ledger: LState): ChainState<LState> {
   return {
-    height: -1,
+    height: 0,
     tipHash: null,
     tipBlock: null,
-    ledger: initialLedger,
-    splitEngineState: initSplitEngineState()
+    ledger,
+    splitEngineState: INITIAL_ENGINE_STATE,
+    difficulty: INITIAL_DIFFICULTY_STATE
   };
 }
