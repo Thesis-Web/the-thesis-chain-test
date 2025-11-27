@@ -1,10 +1,10 @@
 // TARGET: chain src/consensus/apply-difficulty.ts
-// Pack 9 — Difficulty integration helper.
+// Pack 14.3.1 — Fix API alignment with computeNextDifficulty(prev, ts, recent[])
 //
-// This keeps the difficulty logic separate from the main consensus
-// applyBlock flow so we can evolve it without rewriting chain.ts.
+// This keeps the proto consensus engine compatible with the updated
+// difficulty-governor, while still running in empty-window mode.
 
-import type { DifficultyState } from "./difficulty-governor";
+import type { DifficultyState, BlockMeta } from "./difficulty-governor";
 import { computeNextDifficulty } from "./difficulty-governor";
 
 export interface DifficultyTransitionResult {
@@ -15,10 +15,14 @@ export interface DifficultyTransitionResult {
 
 /**
  * Apply the difficulty governor for a new block timestamp.
+ *
+ * Proto-mode uses an empty recent[] window until full block metadata
+ * collection is wired into the chain.
  */
 export function applyDifficultyStep(
   prev: DifficultyState,
   newTimestampSec: number
 ): DifficultyTransitionResult {
-  return computeNextDifficulty(prev, newTimestampSec);
+  const recent: BlockMeta[] = []; // proto-mode window
+  return computeNextDifficulty(prev, newTimestampSec, recent);
 }
