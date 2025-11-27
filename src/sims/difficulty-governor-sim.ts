@@ -1,37 +1,24 @@
 // TARGET: chain src/sims/difficulty-governor-sim.ts
-// Pack 9 — Difficulty governor sanity-check sim.
-//
-// This is a standalone sim; it does NOT depend on consensus/chain.ts.
-// It just walks forward in time with pseudo-random deltas and prints
-// the difficulty target evolution.
+// src/sims/difficulty-governor-sim.ts
+import { createDifficultyState, computeNextDifficulty } from "../consensus/difficulty-governor";
 
-import {
-  INITIAL_DIFFICULTY_STATE,
-  computeNextDifficulty,
-  type DifficultyState
-} from "../consensus/difficulty-governor";
+function runSim() {
+  console.log("=== Difficulty Governor Sim (Pack 13.0) ===");
 
-let state: DifficultyState = INITIAL_DIFFICULTY_STATE;
+  const params = { targetSpacing: 240, maxAdjustUp: 4, maxAdjustDown: 4 };
+  let state = createDifficultyState(1000000000000n);
 
-console.log("=== DIFFICULTY GOVERNOR SIM (v0) ===");
-console.log("Initial target:", state.target.toString());
+  const blocks = [
+    { height: 1, timestamp: 1000 },
+    { height: 2, timestamp: 1240 },
+    { height: 3, timestamp: 1480 },
+    { height: 4, timestamp: 1600 },
+    { height: 5, timestamp: 1800 },
+    { height: 6, timestamp: 2100 },
+  ];
 
-for (let i = 1; i <= 20; i++) {
-  // Fake block spacing: around 240 sec ± 60 sec
-  const jitter = Math.floor(Math.random() * 120) - 60; // [-60, +59]
-  const deltaSec = Math.max(60, 240 + jitter);         // clamp to >= 60
-
-  const newTimestampSec = state.lastTimestampSec + deltaSec;
-  const step = computeNextDifficulty(state, newTimestampSec);
-
-  console.log(
-    `STEP ${i.toString().padStart(2, "0")}`,
-    "deltaSec=", step.deltaSec,
-    "ratio≈", step.adjustmentRatio.toFixed(3),
-    "target=", step.next.target.toString()
-  );
-
-  state = step.next;
+  state = computeNextDifficulty(state, params, blocks);
+  console.log("new target =", state.target.toString());
 }
 
-console.log("=== DIFFICULTY GOVERNOR SIM COMPLETE ===");
+runSim();

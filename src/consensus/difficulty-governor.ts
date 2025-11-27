@@ -1,70 +1,53 @@
 // TARGET: chain src/consensus/difficulty-governor.ts
-// Pack 9 — Difficulty Governor v0
-//
-// Simple, safe difficulty controller:
-// - Target block time: 240 seconds
-// - Adjusts target up/down slowly based on last block delta
-// - Uses BigInt for the target so it can evolve into a real PoW curve later
+// src/consensus/difficulty-governor.ts
+// Pack 13.0 — standalone difficulty governor
 
 export interface DifficultyState {
-  readonly target: bigint;       // higher = easier (more lenient) target
-  readonly lastTimestampSec: number;
+  target: bigint;       // current target (higher = easier)
+  window: number;       // how many blocks to average
 }
 
-export const TARGET_BLOCK_TIME_SEC = 240;
-
-// Reasonable starting target for sims; real networks can override.
-export const INITIAL_DIFFICULTY_STATE: DifficultyState = {
-  target: 2n ** 240n,
-  lastTimestampSec: 0
-};
-
-export interface DifficultyStepResult {
-  readonly next: DifficultyState;
-  readonly deltaSec: number;
-  readonly adjustmentRatio: number;
+export interface BlockMeta {
+  height: number;
+  timestamp: number;    // unix seconds
 }
 
-/**
- * Compute the next difficulty state given the previous state and the
- * new block's timestamp (in seconds).
- *
- * This is deliberately simple and conservative:
- *   - no huge jumps,
- *   - ignores outlier deltas < 1 second,
- *   - only adjusts a small fraction (1/32) per block.
- */
+export interface GovParams {
+  targetSpacing: number; // seconds per block
+  maxAdjustUp: number;   // e.g. 4 (400%)
+  maxAdjustDown: number; // e.g. 4 (400%)
+}
+
+export function createDifficultyState(initialTarget: bigint, window=20): DifficultyState {
+  return { target: initialTarget, window };
+}
+
 export function computeNextDifficulty(
-  prev: DifficultyState,
-  newTimestampSec: number
-): DifficultyStepResult {
-  const rawDelta = newTimestampSec - prev.lastTimestampSec;
-  const deltaSec = Math.max(1, rawDelta);
+  state: DifficultyState,
+  params: GovParams,
+  recent: BlockMeta[]
+): DifficultyState {
+  if (recent.length < 2) return state;
 
-  const ratio = deltaSec / TARGET_BLOCK_TIME_SEC; // >1 = slow, <1 = fast
-
-  let nextTarget = prev.target;
-
-  if (ratio > 1.05) {
-    // Blocks too slow → make target easier (increase target)
-    nextTarget = prev.target + prev.target / 32n;
-  } else if (ratio < 0.95) {
-    // Blocks too fast → make target harder (decrease target)
-    nextTarget = prev.target - prev.target / 32n;
+  const times = [];
+  for (let i = 1; i < recent.length; i++) {
+    const dt = recent[i].timestamp - recent[i - 1].timestamp;
+    if (dt > 0) times.push(dt);
   }
+  if (!times.length) return state;
 
-  if (nextTarget < 1n) {
-    nextTarget = 1n;
+  const avg = times.reduce((a, b) => a + b, 0) / times.length;
+
+  const ratio = avg / params.targetSpacing;
+
+  let newTarget = BigInt(state.target);
+
+  if (ratio < 1) {
+    const factor = Math.max(ratio, 1 / params.maxAdjustUp);
+    newTarget = BigInt(Number(newTarget) * factor);
+  } else {
+    const factor = Math.min(ratio, params.maxAdjustDown);
+    newTarget = BigInt(Number(newTarget) * factor);
   }
-
-  const next: DifficultyState = {
-    target: nextTarget,
-    lastTimestampSec: newTimestampSec
-  };
-
-  return {
-    next,
-    deltaSec,
-    adjustmentRatio: ratio
-  };
+  return { ...state, target: newTarget };
 }

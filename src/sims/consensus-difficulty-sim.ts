@@ -1,116 +1,25 @@
 // TARGET: chain src/sims/consensus-difficulty-sim.ts
 // src/sims/consensus-difficulty-sim.ts
-// ---------------------------------------------------------------------------
-// Consensus + Difficulty + Split Shadow sim (Pack 11.4, type-safe)
-// ---------------------------------------------------------------------------
-// This sim drives the real consensus pipeline end-to-end using the v0.1
-// consensus engine with:
-//   • emission from the emissions model,
-//   • split engine in SHADOW MODE,
-//   • difficulty evolution over time,
-//   • a simple demo ledger that tracks total emitted THE.
-// ---------------------------------------------------------------------------
+import { createDifficultyState, computeNextDifficulty } from "../consensus/difficulty-governor";
 
-import { makeGenesisState } from "../consensus/state";
-import {
-  makeConsensusEnv,
-  applyBlock,
-  type ApplyBlockResult
-} from "../consensus/chain";
-import type { ChainState } from "../consensus/state";
-import type { Block } from "../consensus/block";
-import type { EmissionBreakdown } from "../emissions/model";
-import { TARGET_BLOCK_TIME_SEC } from "../consensus/difficulty-governor";
+function runSim() {
+  console.log("=== Chain-style Difficulty Sim (Pack 13.0) ===");
 
-type DemoLedger = { readonly totalEmission: number };
+  const params = { targetSpacing: 240, maxAdjustUp: 4, maxAdjustDown: 4 };
+  let state = createDifficultyState(1000000000000n);
 
-function makeInitialLedger(): DemoLedger {
-  return { totalEmission: 0 };
-}
+  const blocks = [];
+  let t = 1000;
+  for (let h = 1; h <= 50; h++) {
+    t += (h % 2 === 0 ? 200 : 300);
+    blocks.push({ height: h, timestamp: t });
 
-function applyDemoLedger(
-  prev: DemoLedger,
-  _block: Block,
-  emission: EmissionBreakdown
-): DemoLedger {
-  // For now we just accumulate the totalRewardTHE as a number for logging.
-  const total = Number(emission.totalRewardTHE);
-  return { totalEmission: prev.totalEmission + total };
-}
-
-const INITIAL_TIMESTAMP_SEC = 1_700_000_000;
-
-function makeDummyBlock(
-  height: number,
-  parentHash: string | null,
-  timestampSec: number
-): Block {
-  // In sims we can get away with a dummy hash; in real nodes this would be
-  // computed via computeBlockHash(header) at construction time.
-  return {
-    hash: `SIM_HASH_${height}`,
-    header: { height, parentHash, timestampSec, nonce: 0n },
-    body: { txs: [] }
-  };
-}
-
-function runSim(): void {
-  console.log("=== CONSENSUS + DIFFICULTY + SPLIT SHADOW SIM (Pack 11.4) ===");
-
-  let state: ChainState<DemoLedger> = makeGenesisState(makeInitialLedger());
-  const env = makeConsensusEnv();
-
-  let lastTimestampSec = INITIAL_TIMESTAMP_SEC;
-  const totalBlocks = 24;
-
-  for (let i = 1; i <= totalBlocks; i++) {
-    const jitter = Math.floor(Math.random() * 120) - 60;
-    const deltaSec = Math.max(60, TARGET_BLOCK_TIME_SEC + jitter);
-    const timestampSec = lastTimestampSec + deltaSec;
-
-    const block = makeDummyBlock(i, state.tipHash, timestampSec);
-
-    // Compute effective ratio vs target using the DifficultyState carried on state.
-    const prevTarget = state.difficulty.target;
-    const prevTs = state.difficulty.lastTimestampSec;
-    const effDelta = Math.max(1, timestampSec - prevTs);
-    const ratio = effDelta / TARGET_BLOCK_TIME_SEC;
-
-    // Apply consensus (ledger is treated as inert here).
-    const result: ApplyBlockResult<DemoLedger> = applyBlock(env, state, block);
-
-    const emission = result.emission;
-    const nextLedger = applyDemoLedger(state.ledger, block, emission);
-
-    const nextState: ChainState<DemoLedger> = {
-      ...result.nextState,
-      ledger: nextLedger
-    };
-
-    const nextTarget = nextState.difficulty.target;
-    const splitInfo = result.splitShadowInfo;
-
-    console.log("------------------------------------------------------------");
-    console.log(`#${i.toString().padStart(4, "0")}  t=${timestampSec}s  Δt=${deltaSec}s`);
-    console.log(
-      "difficulty:",
-      "prev=", prevTarget.toString(),
-      "next=", nextTarget.toString(),
-      "ratio≈", ratio.toFixed(3)
-    );
-    console.log("ledger: totalEmission=", nextState.ledger.totalEmission);
-    console.log(
-      "splitShadow:",
-      "cumFactor≈", String(splitInfo.cumulativeFactor),
-      "shouldSplit=", splitInfo.shouldSplit,
-      "reason=", splitInfo.reason
-    );
-
-    state = nextState;
-    lastTimestampSec = timestampSec;
+    if (blocks.length >= state.window) {
+      const window = blocks.slice(-state.window);
+      state = computeNextDifficulty(state, params, window);
+      console.log("h", h, "target", state.target.toString());
+    }
   }
-
-  console.log("=== SIM COMPLETE ===");
 }
 
 runSim();
