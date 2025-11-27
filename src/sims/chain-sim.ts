@@ -42,7 +42,12 @@ function buildBlock(prev: ChainState<LedgerState>, height: number): Block {
 function runSim(): void {
   console.log("=== Chain Sim (Pack 14.3, canonical hashes) ===");
 
-  const env = makeConsensusEnv();
+  const env = makeConsensusEnv({
+  flags: {
+    powEnforcement: false,
+    enableSplitShadowMode: true
+  }
+});
   let state = makeGenesisState<LedgerState>(null);
 
   for (let h = 1; h <= 5; h++) {

@@ -44,7 +44,13 @@ function buildBlock(
 function runSim(): void {
   console.log("=== Consensus Skeleton Sim (Pack 14.3) ===");
 
-  const env = makeConsensusEnv();
+const env = makeConsensusEnv({
+  flags: {
+    powEnforcement: false,
+    enableSplitShadowMode: true
+  }
+});
+
   let state = makeGenesisState<LedgerState>(null);
 
   // First block
