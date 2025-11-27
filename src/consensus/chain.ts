@@ -1,5 +1,5 @@
 // TARGET: chain src/consensus/chain.ts
-// Pack 10.1 — applyBlock wired with difficulty evolution (aligned to current repo)
+// Pack 10.2 — Difficulty-integrated applyBlock (no split-engine changes)
 
 import { computeBlockHash } from "./block";
 import type { Block } from "./block";

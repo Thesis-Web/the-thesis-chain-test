@@ -1,9 +1,9 @@
 // TARGET: chain src/consensus/state.ts
-// Pack 10.1 — Consensus State with Difficulty integrated (aligned to existing split engine)
+// Pack 10.2 — Consensus State with Difficulty integrated (aligned to actual repo)
 
 import type { Block } from "./block";
 import type { SplitEngineState } from "../splits/split-engine";
-import { INITIAL_ENGINE_STATE } from "../splits/split-engine";
+import { INITIAL_SPLIT_ENGINE_STATE } from "../splits/split-engine";
 import type { DifficultyState } from "./difficulty-governor";
 import { INITIAL_DIFFICULTY_STATE } from "./difficulty-governor";
 
@@ -22,7 +22,7 @@ export function makeGenesisState<LState>(ledger: LState): ChainState<LState> {
     tipHash: null,
     tipBlock: null,
     ledger,
-    splitEngineState: INITIAL_ENGINE_STATE,
+    splitEngineState: INITIAL_SPLIT_ENGINE_STATE,
     difficulty: INITIAL_DIFFICULTY_STATE
   };
 }
