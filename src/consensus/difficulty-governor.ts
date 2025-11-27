@@ -1,21 +1,21 @@
 // TARGET: chain src/consensus/difficulty-governor.ts
 // src/consensus/difficulty-governor.ts
-// Pack 13.0 — standalone difficulty governor
+// Pack 13.0.1 — integer math difficulty governor
 
 export interface DifficultyState {
-  target: bigint;       // current target (higher = easier)
-  window: number;       // how many blocks to average
+  target: bigint;
+  window: number;
 }
 
 export interface BlockMeta {
   height: number;
-  timestamp: number;    // unix seconds
+  timestamp: number;
 }
 
 export interface GovParams {
-  targetSpacing: number; // seconds per block
-  maxAdjustUp: number;   // e.g. 4 (400%)
-  maxAdjustDown: number; // e.g. 4 (400%)
+  targetSpacing: number;
+  maxAdjustUp: number;
+  maxAdjustDown: number;
 }
 
 export function createDifficultyState(initialTarget: bigint, window=20): DifficultyState {
@@ -29,25 +29,33 @@ export function computeNextDifficulty(
 ): DifficultyState {
   if (recent.length < 2) return state;
 
-  const times = [];
+  // Compute integer average spacing
+  let sum = 0;
+  let count = 0;
   for (let i = 1; i < recent.length; i++) {
     const dt = recent[i].timestamp - recent[i - 1].timestamp;
-    if (dt > 0) times.push(dt);
+    if (dt > 0) { sum += dt; count++; }
   }
-  if (!times.length) return state;
+  if (count === 0) return state;
 
-  const avg = times.reduce((a, b) => a + b, 0) / times.length;
+  const avg = Math.floor(sum / count);
 
-  const ratio = avg / params.targetSpacing;
+  const avgI = BigInt(avg);
+  const targetSpacingI = BigInt(params.targetSpacing);
 
-  let newTarget = BigInt(state.target);
+  let num = avgI;
+  let den = targetSpacingI;
 
-  if (ratio < 1) {
-    const factor = Math.max(ratio, 1 / params.maxAdjustUp);
-    newTarget = BigInt(Number(newTarget) * factor);
+  // Clamp for too-fast blocks (harder)
+  if (num < den) {
+    const floor = den / BigInt(params.maxAdjustUp);
+    if (num < floor) num = floor;
   } else {
-    const factor = Math.min(ratio, params.maxAdjustDown);
-    newTarget = BigInt(Number(newTarget) * factor);
+    // too slow (easier)
+    const ceil = den * BigInt(params.maxAdjustDown);
+    if (num > ceil) num = ceil;
   }
+
+  const newTarget = (state.target * num) / den;
   return { ...state, target: newTarget };
 }
