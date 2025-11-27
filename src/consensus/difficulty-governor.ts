@@ -1,6 +1,6 @@
 // TARGET: chain src/consensus/difficulty-governor.ts
 // src/consensus/difficulty-governor.ts
-// Pack 13.0.1 — integer math difficulty governor
+// Pack 13.0.1 + 13.1 — integer math difficulty governor with INITIAL_DIFFICULTY_STATE
 
 export interface DifficultyState {
   target: bigint;
@@ -18,9 +18,12 @@ export interface GovParams {
   maxAdjustDown: number;
 }
 
-export function createDifficultyState(initialTarget: bigint, window=20): DifficultyState {
+export function createDifficultyState(initialTarget: bigint, window = 20): DifficultyState {
   return { target: initialTarget, window };
 }
+
+// Default initial difficulty state for ChainState genesis wiring.
+export const INITIAL_DIFFICULTY_STATE: DifficultyState = createDifficultyState(1000000000000n);
 
 export function computeNextDifficulty(
   state: DifficultyState,
@@ -29,12 +32,15 @@ export function computeNextDifficulty(
 ): DifficultyState {
   if (recent.length < 2) return state;
 
-  // Compute integer average spacing
+  // Compute integer average spacing.
   let sum = 0;
   let count = 0;
   for (let i = 1; i < recent.length; i++) {
     const dt = recent[i].timestamp - recent[i - 1].timestamp;
-    if (dt > 0) { sum += dt; count++; }
+    if (dt > 0) {
+      sum += dt;
+      count++;
+    }
   }
   if (count === 0) return state;
 
@@ -46,12 +52,12 @@ export function computeNextDifficulty(
   let num = avgI;
   let den = targetSpacingI;
 
-  // Clamp for too-fast blocks (harder)
+  // Clamp for too-fast blocks (harder).
   if (num < den) {
     const floor = den / BigInt(params.maxAdjustUp);
     if (num < floor) num = floor;
   } else {
-    // too slow (easier)
+    // Too slow (easier).
     const ceil = den * BigInt(params.maxAdjustDown);
     if (num > ceil) num = ceil;
   }
