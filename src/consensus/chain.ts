@@ -1,19 +1,19 @@
 // TARGET: chain src/consensus/chain.ts
 // src/consensus/chain.ts
 // ---------------------------------------------------------------------------
-// L1 Consensus skeleton (v0.2 with Difficulty + SplitEngine shadow integration
-// and basic timestamp validation)
+// L1 Consensus skeleton (v0.3 with Difficulty + SplitEngine shadow integration,
+// basic timestamp validation, and PoW enforcement hook)
 // ---------------------------------------------------------------------------
 // This module provides a minimal consensus "engine" that can:
 //   • validate basic block linkage (parentHash, height),
 //   • validate basic timestamp monotonicity + future drift bounds,
 //   • compute emission for a given height using the emissions model,
 //   • run the split engine in SHADOW MODE via runSplitShadowHook,
-//   • evolve a DifficultyState over time (but NOT yet enforce PoW),
+//   • evolve a DifficultyState over time and enforce a basic PoW rule,
 //   • allow a caller-supplied ledger transition function to update ledger state.
 //
 // It intentionally does NOT (yet):
-//   • enforce difficulty/PoW against block headers,
+//   • define the full header hashing scheme,
 //   • mutate balances or supply based on split decisions,
 //   • know the concrete ledger shape (ledger is an opaque type parameter).
 // ---------------------------------------------------------------------------
@@ -30,6 +30,7 @@ import {
   type SplitHookEnv
 } from "./split-shadow-hook";
 import { applyDifficultyStep } from "./apply-difficulty";
+import { ensurePowMeetsTarget } from "./pow";
 
 export interface ConsensusConfig {
   readonly flags?: FeatureFlags;
@@ -75,14 +76,16 @@ export function makeConsensusEnv(cfg?: ConsensusConfig): ConsensusEnv {
 /**
  * Apply a single block to the chain in a pure, functional style.
  *
- * This function performs v0.2 checks:
+ * This function performs v0.3 checks:
  *   • parentHash linkage,
  *   • monotonic height progression,
- *   • basic timestamp monotonicity and future-drift bounds.
+ *   • basic timestamp monotonicity and future-drift bounds,
+ *   • basic PoW enforcement when the hash is hex-encoded.
  *
  * Emission is computed via computeEmissionForHeight(height).
  * The split engine is run in SHADOW MODE only (never mutating balances).
- * Difficulty is evolved over time but NOT yet enforced against headers.
+ * Difficulty is evolved over time but NOT yet wired to a concrete header
+ * hashing scheme; that will be layered on in a later pack.
  */
 export function applyBlock<LState>(
   env: ConsensusEnv,
@@ -126,8 +129,18 @@ export function applyBlock<LState>(
     }
   }
 
-  // v0.2: we still do NOT enforce difficulty/PoW here. The DifficultyState
-  // carried on ChainState is evolved so that future PoW checks can use it.
+  // -------------------------------------------------------------------------
+  // Basic PoW enforcement (opt-in for hex-encoded hashes)
+  // -------------------------------------------------------------------------
+  try {
+    // For legacy/proto sims that do not use hex hashes, ensurePowMeetsTarget
+    // is a no-op. New sims that adopt hex-encoded hashes will get real PoW
+    // enforcement here.
+    ensurePowMeetsTarget(block.hash, prevState.difficulty.target);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(`applyBlock: PoW check failed: ${msg}`);
+  }
 
   // -------------------------------------------------------------------------
   // Emission for this height
@@ -153,7 +166,7 @@ export function applyBlock<LState>(
   );
 
   // -------------------------------------------------------------------------
-  // Difficulty evolution (no enforcement yet)
+  // Difficulty evolution (no header-hash wiring yet)
   // -------------------------------------------------------------------------
   const diffStep = applyDifficultyStep(
     prevState.difficulty,
