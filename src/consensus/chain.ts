@@ -1,10 +1,12 @@
 // TARGET: chain src/consensus/chain.ts
 // src/consensus/chain.ts
 // ---------------------------------------------------------------------------
-// L1 Consensus skeleton (v0.1 with Difficulty + SplitEngine shadow integration)
+// L1 Consensus skeleton (v0.2 with Difficulty + SplitEngine shadow integration
+// and basic timestamp validation)
 // ---------------------------------------------------------------------------
 // This module provides a minimal consensus "engine" that can:
 //   • validate basic block linkage (parentHash, height),
+//   • validate basic timestamp monotonicity + future drift bounds,
 //   • compute emission for a given height using the emissions model,
 //   • run the split engine in SHADOW MODE via runSplitShadowHook,
 //   • evolve a DifficultyState over time (but NOT yet enforce PoW),
@@ -38,8 +40,8 @@ export interface ConsensusEnv {
 }
 
 export interface ApplyBlockOptions<LState> {
-  // Wall-clock timestamp at the time of validation (for future use with
-  // difficulty/timestamp checks). Currently unused.
+  // Wall-clock timestamp at the time of validation (used with timestamp
+  // drift checks).
   readonly nowSec?: number;
 
   // Caller-supplied ledger transition function. If omitted, the ledger is
@@ -57,6 +59,10 @@ export interface ApplyBlockResult<LState> {
   };
 }
 
+// Basic bound on how far into the future a block timestamp is allowed to be
+// relative to the validation time (if provided).
+const MAX_FUTURE_DRIFT_SEC = 60 * 60; // 1 hour
+
 /**
  * Construct a ConsensusEnv from a partial config, defaulting missing fields.
  */
@@ -69,9 +75,10 @@ export function makeConsensusEnv(cfg?: ConsensusConfig): ConsensusEnv {
 /**
  * Apply a single block to the chain in a pure, functional style.
  *
- * This function performs v0 checks:
+ * This function performs v0.2 checks:
  *   • parentHash linkage,
- *   • monotonic height progression.
+ *   • monotonic height progression,
+ *   • basic timestamp monotonicity and future-drift bounds.
  *
  * Emission is computed via computeEmissionForHeight(height).
  * The split engine is run in SHADOW MODE only (never mutating balances).
@@ -96,8 +103,31 @@ export function applyBlock<LState>(
     throw new Error("applyBlock: parentHash mismatch");
   }
 
-  // v0.1: we still do NOT enforce difficulty here. The DifficultyState carried
-  // on ChainState is evolved so that future PoW checks can use it.
+  // -------------------------------------------------------------------------
+  // Timestamp checks (monotonicity + future drift)
+  // -------------------------------------------------------------------------
+  const blockTs = block.header.timestampSec;
+
+  if (prevState.tipBlock) {
+    const prevTs = prevState.tipBlock.header.timestampSec;
+    if (blockTs < prevTs) {
+      throw new Error(
+        `applyBlock: non-monotonic timestamp ${blockTs} < ${prevTs}`
+      );
+    }
+  }
+
+  if (typeof opts.nowSec === "number") {
+    const maxAllowed = opts.nowSec + MAX_FUTURE_DRIFT_SEC;
+    if (blockTs > maxAllowed) {
+      throw new Error(
+        `applyBlock: block timestamp ${blockTs} is too far in the future (max ${maxAllowed})`
+      );
+    }
+  }
+
+  // v0.2: we still do NOT enforce difficulty/PoW here. The DifficultyState
+  // carried on ChainState is evolved so that future PoW checks can use it.
 
   // -------------------------------------------------------------------------
   // Emission for this height
