@@ -1,25 +1,27 @@
 // TARGET: chain src/consensus/chain.ts
 // src/consensus/chain.ts
 // ---------------------------------------------------------------------------
-// L1 Consensus skeleton (v0.3 with Difficulty + SplitEngine shadow integration,
-// basic timestamp validation, and PoW enforcement hook)
+// L1 Consensus skeleton (v0.4 with Difficulty + SplitEngine shadow integration,
+// basic timestamp validation, PoW enforcement hook, and canonical hash check)
 // ---------------------------------------------------------------------------
 // This module provides a minimal consensus "engine" that can:
 //   • validate basic block linkage (parentHash, height),
 //   • validate basic timestamp monotonicity + future drift bounds,
+//   • enforce that block.hash matches the canonical header hash,
 //   • compute emission for a given height using the emissions model,
 //   • run the split engine in SHADOW MODE via runSplitShadowHook,
 //   • evolve a DifficultyState over time and enforce a basic PoW rule,
 //   • allow a caller-supplied ledger transition function to update ledger state.
 //
 // It intentionally does NOT (yet):
-//   • define the full header hashing scheme,
+//   • define the full production header layout (merkle roots, etc.),
 //   • mutate balances or supply based on split decisions,
 //   • know the concrete ledger shape (ledger is an opaque type parameter).
 // ---------------------------------------------------------------------------
 
 import type { ChainState } from "./state";
 import type { Block } from "./block";
+import { computeBlockHash } from "./block";
 import type { FeatureFlags } from "../params/feature-flags";
 import { DEFAULT_FEATURE_FLAGS } from "../params/feature-flags";
 import type { EmissionBreakdown } from "../emissions/model";
@@ -76,16 +78,17 @@ export function makeConsensusEnv(cfg?: ConsensusConfig): ConsensusEnv {
 /**
  * Apply a single block to the chain in a pure, functional style.
  *
- * This function performs v0.3 checks:
+ * This function performs v0.4 checks:
  *   • parentHash linkage,
  *   • monotonic height progression,
  *   • basic timestamp monotonicity and future-drift bounds,
+ *   • canonical header-hash consistency (block.hash must match),
  *   • basic PoW enforcement when the hash is hex-encoded.
  *
  * Emission is computed via computeEmissionForHeight(height).
  * The split engine is run in SHADOW MODE only (never mutating balances).
- * Difficulty is evolved over time but NOT yet wired to a concrete header
- * hashing scheme; that will be layered on in a later pack.
+ * Difficulty is evolved over time but NOT yet wired to a concrete production
+ * header layout with merkle roots, etc.; that will be layered on later.
  */
 export function applyBlock<LState>(
   env: ConsensusEnv,
@@ -130,6 +133,14 @@ export function applyBlock<LState>(
   }
 
   // -------------------------------------------------------------------------
+  // Canonical header-hash consistency
+  // -------------------------------------------------------------------------
+  const expectedHash = computeBlockHash(block.header);
+  if (block.hash !== expectedHash) {
+    throw new Error("applyBlock: block.hash does not match canonical header hash");
+  }
+
+  // -------------------------------------------------------------------------
   // Basic PoW enforcement (opt-in for hex-encoded hashes)
   // -------------------------------------------------------------------------
   try {
@@ -166,7 +177,7 @@ export function applyBlock<LState>(
   );
 
   // -------------------------------------------------------------------------
-  // Difficulty evolution (no header-hash wiring yet)
+  // Difficulty evolution (no production header layout yet)
   // -------------------------------------------------------------------------
   const diffStep = applyDifficultyStep(
     prevState.difficulty,
