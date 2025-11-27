@@ -1,10 +1,25 @@
 // TARGET: chain src/sims/consensus-difficulty-sim.ts
-// Pack 11.2 — Consensus + Difficulty sim (aligned to orchestrator-based split engine)
+// src/sims/consensus-difficulty-sim.ts
+// ---------------------------------------------------------------------------
+// Consensus + Difficulty + Split Shadow sim (Pack 11.3)
+// ---------------------------------------------------------------------------
+// This sim drives the real consensus pipeline end-to-end using the v0.1
+// consensus engine with:
+//   • emission from the emissions model,
+//   • split engine in SHADOW MODE,
+//   • difficulty evolution over time,
+//   • a simple demo ledger that tracks total emitted THE.
+// ---------------------------------------------------------------------------
 
 import { makeGenesisState } from "../consensus/state";
-import { makeConsensusEnv, applyBlock } from "../consensus/chain";
+import {
+  makeConsensusEnv,
+  applyBlock,
+  type ApplyBlockResult
+} from "../consensus/chain";
 import type { ChainState } from "../consensus/state";
 import type { Block } from "../consensus/block";
+import type { EmissionBreakdown } from "../emissions/model";
 import { TARGET_BLOCK_TIME_SEC } from "../consensus/difficulty-governor";
 
 type DemoLedger = { readonly totalEmission: number };
@@ -13,8 +28,10 @@ function makeInitialLedger(): DemoLedger {
   return { totalEmission: 0 };
 }
 
-function applyDemoLedger(prev: DemoLedger, emission: number): DemoLedger {
-  return { totalEmission: prev.totalEmission + emission };
+function applyDemoLedger(prev: DemoLedger, _block: Block, emission: EmissionBreakdown): DemoLedger {
+  // For now we just accumulate the totalRewardTHE as a number for logging.
+  const total = Number(emission.totalRewardTHE);
+  return { totalEmission: prev.totalEmission + total };
 }
 
 const INITIAL_TIMESTAMP_SEC = 1_700_000_000;
@@ -24,18 +41,20 @@ function makeDummyBlock(
   parentHash: string | null,
   timestampSec: number
 ): Block {
+  // In sims we can get away with a dummy hash; in real nodes this would be
+  // computed via computeBlockHash(header) at construction time.
   return {
-    hash: "",
-    header: { height, parentHash, timestampSec },
+    hash: `SIM_HASH_${height}`,
+    header: { height, parentHash, timestampSec, nonce: 0n },
     body: { txs: [] }
-  } as unknown as Block;
+  };
 }
 
 function runSim(): void {
-  console.log("=== CONSENSUS + DIFFICULTY SIM (Pack 11.2) ===");
+  console.log("=== CONSENSUS + DIFFICULTY + SPLIT SHADOW SIM (Pack 11.3) ===");
 
   let state: ChainState<DemoLedger> = makeGenesisState(makeInitialLedger());
-  const env = makeConsensusEnv(applyDemoLedger);
+  const env = makeConsensusEnv();
 
   let lastTimestampSec = INITIAL_TIMESTAMP_SEC;
   const totalBlocks = 24;
@@ -47,19 +66,30 @@ function runSim(): void {
 
     const block = makeDummyBlock(i, state.tipHash, timestampSec);
 
+    // Compute effective ratio vs target using the DifficultyState carried on state.
     const prevTarget = state.difficulty.target;
     const prevTs = state.difficulty.lastTimestampSec;
     const effDelta = Math.max(1, timestampSec - prevTs);
     const ratio = effDelta / TARGET_BLOCK_TIME_SEC;
 
-    const nextState = applyBlock(state, block, env);
+    // Apply consensus.
+    const result: ApplyBlockResult<DemoLedger> = applyBlock(env, state, block, {
+      applyLedgerFn: (prevLedger, blk) =>
+        applyDemoLedger(prevLedger, blk, result.emission) // will be overridden below
+    } as any);
+    // The above cast is a minor TS hack to keep the sim lightweight; in a real
+    // node we'd wire the ledger more strictly. For logging we can update the
+    // ledger after the fact using result.emission.
+    const emission = result.emission;
+    const nextLedger = applyDemoLedger(state.ledger, block, emission);
+
+    const nextState: ChainState<DemoLedger> = {
+      ...result.nextState,
+      ledger: nextLedger
+    };
 
     const nextTarget = nextState.difficulty.target;
-
-    const splitFactor =
-      (nextState.splitEngineState as any).cumulativeFactor ??
-      (nextState.splitEngineState as any).cumulativeFactorDec ??
-      null;
+    const splitInfo = result.splitShadowInfo;
 
     console.log("------------------------------------------------------------");
     console.log(`#${i.toString().padStart(4, "0")}  t=${timestampSec}s  Δt=${deltaSec}s`);
@@ -70,11 +100,12 @@ function runSim(): void {
       "ratio≈", ratio.toFixed(3)
     );
     console.log("ledger: totalEmission=", nextState.ledger.totalEmission);
-    if (splitFactor !== null) {
-      console.log("splitShadow: cumulativeFactor≈", splitFactor);
-    } else {
-      console.log("splitShadow: (no cumulative factor)");
-    }
+    console.log(
+      "splitShadow:",
+      "cumFactor≈", String(splitInfo.cumulativeFactor),
+      "shouldSplit=", splitInfo.shouldSplit,
+      "reason=", splitInfo.reason
+    );
 
     state = nextState;
     lastTimestampSec = timestampSec;
