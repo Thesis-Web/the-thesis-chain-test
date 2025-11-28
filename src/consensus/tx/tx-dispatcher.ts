@@ -1,24 +1,95 @@
 // TARGET: chain src/consensus/tx/tx-dispatcher.ts
 // src/consensus/tx/tx-dispatcher.ts
 // ---------------------------------------------------------------------------
-// Pack 15.2 — Ledger transition dispatcher (consensus-side plumbing)
+// Pack 17.0 — TransferTHE VM wiring (consensus-side)
 // ---------------------------------------------------------------------------
 //
 // This module provides a single entry point:
 //
 //   applyBlockTx(prevLedger, tx) => nextLedger
 //
-// For now, this is *intentionally conservative*: we wire the tx surface but
-// do not yet mutate balances. That will be introduced in a later pack once
-// the full VM / ledger rules have been finalized and approved.
+// In Pack 15.2 this was a structural no-op used only to validate tx shapes.
+// In Pack 17.0 we introduce *real* value movement for TRANSFER_THE when the
+// ledger matches the concrete FullLedgerStateV1 shape used by consensus.
 //
-// This ensures:
-//   - consensus has a typed tx pipeline
-//   - we can fail fast on unknown tx shapes
-//   - existing sims remain behaviorally identical
+// Rules:
+//   - If the ledger is a FullLedgerStateV1, TRANSFER_THE will debit `from`
+//     and credit `to` on `ledger.chain.accounts` using the ledger helpers.
+//   - All other tx types remain structural no-ops for now.
+//   - For non-FullLedgerStateV1 ledgers, we keep the previous behavior:
+//       • validate txType and return the ledger unchanged.
 // ---------------------------------------------------------------------------
 
 import type { TheTx } from "./tx-types";
+import type { FullLedgerStateV1 } from "../ledger-state";
+import { creditAccount, debitAccount } from "../../ledger/state";
+import type { Address, Amount } from "../../types/primitives";
+
+// ---------------------------------------------------------------------------
+// Runtime type guard for FullLedgerStateV1
+// ---------------------------------------------------------------------------
+
+function isFullLedgerStateV1(value: unknown): value is FullLedgerStateV1 {
+  if (!value || typeof value !== "object") return false;
+
+  const v = value as any;
+  const chain = v.chain;
+  const eu = v.eu;
+
+  if (!chain || typeof chain !== "object") return false;
+  if (!(chain.accounts instanceof Map)) return false;
+  if (!(chain.vaults instanceof Map)) return false;
+
+  if (!eu || typeof eu !== "object") return false;
+  if (!(eu.byId instanceof Map)) return false;
+  if (!(eu.byOwner instanceof Map)) return false;
+
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Internal helper: concrete VM for FullLedgerStateV1
+// ---------------------------------------------------------------------------
+
+function applyBlockTxFullLedger(
+  ledger: FullLedgerStateV1,
+  tx: TheTx
+): FullLedgerStateV1 {
+  switch (tx.txType) {
+    case "TRANSFER_THE": {
+      const { from, to, amountTHE } = tx;
+
+      // Basic sanity check; debit/credit enforce positivity and balances.
+      if (amountTHE <= 0n) {
+        throw new Error("TRANSFER_THE: amountTHE must be positive");
+      }
+
+      // Mutate the underlying chain accounts in-place.
+      debitAccount(ledger.chain, from, amountTHE);
+      creditAccount(ledger.chain, to, amountTHE);
+      return ledger;
+    }
+
+    case "MINT_EU":
+    case "REDEEM_EU":
+    case "SPLIT_AWARD":
+    case "INTERNAL_REWARD":
+      // Future packs will wire these, but for now they are explicit no-ops
+      // on the concrete ledger type.
+      return ledger;
+
+    default: {
+      // Exhaustiveness safeguard — if a new txType is added to TheTx but not
+      // handled here, TypeScript can complain once enabled.
+      // const _never: never = tx;
+      throw new Error(`applyBlockTxFullLedger: unsupported txType ${(tx as any).txType}`);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Public dispatcher
+// ---------------------------------------------------------------------------
 
 /**
  * Apply a single transaction to the given ledger snapshot.
@@ -26,35 +97,27 @@ import type { TheTx } from "./tx-types";
  * NOTE:
  *   - `LState` is kept generic so that different sims / environments can
  *     plug in their own concrete ledger representation.
- *   - In Pack 15.2 this is intentionally a structural no-op that validates
- *     the tx shape and returns the previous ledger unchanged.
+ *   - If the ledger is a FullLedgerStateV1 we route through the concrete VM
+ *     above; otherwise we behave as a structural no-op (Pack 15.2 behavior).
  */
 export function applyBlockTx<LState>(prevLedger: LState, tx: TheTx): LState {
+  if (isFullLedgerStateV1(prevLedger)) {
+    // Use the concrete VM, then widen back to generic LState.
+    const next = applyBlockTxFullLedger(prevLedger, tx);
+    return next as unknown as LState;
+  }
+
+  // Fallback behavior for non-FullLedgerStateV1 ledgers: keep Pack 15.2
+  // semantics (validate txType, return ledger unchanged).
   switch (tx.txType) {
     case "TRANSFER_THE":
-      // TODO (later pack): integrate with accounts ledger
-      return prevLedger;
-
     case "MINT_EU":
-      // TODO (later pack): integrate with EU registry + vault backing
-      return prevLedger;
-
     case "REDEEM_EU":
-      // TODO (later pack): integrate with EU registry redemption flow
-      return prevLedger;
-
     case "SPLIT_AWARD":
-      // TODO (later pack): hook into split engine + balance reindexing
-      return prevLedger;
-
     case "INTERNAL_REWARD":
-      // TODO (later pack): route to miner / pool reward accounts
       return prevLedger;
 
     default: {
-      // Exhaustiveness safeguard — if a new txType is added to TheTx but not
-      // handled here, TypeScript will complain once this block is enabled.
-      // const _never: never = tx;
       throw new Error(`applyBlockTx: unsupported txType ${(tx as any).txType}`);
     }
   }
