@@ -63,6 +63,25 @@ export interface TxRedeemEU {
   readonly euCertificateId: EuCertificateId;
 }
 
+export interface TxVaultCreate {
+  readonly txType: "VAULT_CREATE";
+  readonly vaultId: VaultId;
+  readonly owner: Address;
+}
+
+export interface TxVaultDeposit {
+  readonly txType: "VAULT_DEPOSIT";
+  readonly vaultId: VaultId;
+  readonly amountTHE: Amount;
+}
+
+export interface TxVaultWithdraw {
+  readonly txType: "VAULT_WITHDRAW";
+  readonly vaultId: VaultId;
+  readonly amountTHE: Amount;
+}
+
+
 /**
  * Split award bookkeeping tx.
  *
@@ -92,5 +111,8 @@ export type TheTx =
   | TxTransferTHE
   | TxMintEU
   | TxRedeemEU
+  | TxVaultCreate
+  | TxVaultDeposit
+  | TxVaultWithdraw
   | TxAwardSplit
   | TxInternalReward;

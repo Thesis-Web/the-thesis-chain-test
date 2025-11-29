@@ -26,9 +26,10 @@
 //       • validate txType and return the ledger unchanged.
 // ---------------------------------------------------------------------------
 
-import type { TheTx, TxMintEU, TxRedeemEU } from "./tx-types";
+import type { TheTx, TxMintEU, TxRedeemEU, TxVaultCreate, TxVaultDeposit, TxVaultWithdraw } from "./tx-types";
 import type { FullLedgerStateV1 } from "../ledger-state";
 import { creditAccount, debitAccount } from "../../ledger/state";
+import { createVault, depositToVault, withdrawFromVault } from "../../ledger/vault";
 import {
   registerEuCertificate,
   markEuRedeemed
@@ -79,6 +80,30 @@ function applyBlockTxFullLedger(
       // Mutate the underlying chain accounts in-place.
       debitAccount(ledger.chain, from, amountTHE);
       creditAccount(ledger.chain, to, amountTHE);
+      return ledger;
+    }
+
+    case "VAULT_CREATE": {
+      const { vaultId, owner } = tx as TxVaultCreate;
+      createVault(ledger.chain.vaults, vaultId, owner);
+      return ledger;
+    }
+
+    case "VAULT_DEPOSIT": {
+      const { vaultId, amountTHE } = tx as TxVaultDeposit;
+      if (amountTHE <= 0n) {
+        throw new Error("VAULT_DEPOSIT: amountTHE must be positive");
+      }
+      depositToVault(ledger.chain.vaults, vaultId, amountTHE);
+      return ledger;
+    }
+
+    case "VAULT_WITHDRAW": {
+      const { vaultId, amountTHE } = tx as TxVaultWithdraw;
+      if (amountTHE <= 0n) {
+        throw new Error("VAULT_WITHDRAW: amountTHE must be positive");
+      }
+      withdrawFromVault(ledger.chain.vaults, vaultId, amountTHE);
       return ledger;
     }
 
@@ -156,6 +181,9 @@ export function applyBlockTx<LState>(prevLedger: LState, tx: TheTx): LState {
     case "TRANSFER_THE":
     case "MINT_EU":
     case "REDEEM_EU":
+    case "VAULT_CREATE":
+    case "VAULT_DEPOSIT":
+    case "VAULT_WITHDRAW":
     case "SPLIT_AWARD":
     case "INTERNAL_REWARD":
       return prevLedger;
