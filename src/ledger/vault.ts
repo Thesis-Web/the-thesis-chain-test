@@ -1,34 +1,78 @@
+// TARGET: chain src/ledger/vault.ts
 // src/ledger/vault.ts
 // ---------------------------------------------------------------------------
-// Vault storage + basic ops
+// Vault storage + basic ops (Pack 23-FIX — full vault engine rewrite)
 // ---------------------------------------------------------------------------
 //
-// This is a minimal vault engine:
+// This module defines the on-ledger representation of vaults and the basic
+// mutation primitives used by consensus and higher-level engines.
 //
-//   Vault:
-//     - id: string
-//     - owner: Address
-//     - balanceTHE: Amount
+// Design goals:
+//   - Simple, Total, Explicit.
+//   - No hidden side-effects: all mutations go through helpers here.
+//   - Safe-by-default invariants around existence and non-negative balances.
 //
-//   VaultMap: Map<VaultId, Vault>
-//
-// No EU/wTHE semantics yet — this is just “boxes of THE” wired
-// into ChainState. Higher-level behavior will layer on top.
+// NOTE:
+//   - This file intentionally stays wTHE/EU-agnostic. It models generic
+//     "boxes of THE". BoT / EU-layer semantics will be added in higher
+//     layers and later packs.
 // ---------------------------------------------------------------------------
 
 import type { Address, Amount } from "../types/primitives";
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 export type VaultId = string;
 
+/**
+ * Vault — a simple container of THE controlled by an on-chain owner.
+ *
+ * Fields:
+ *   - id          : stable identifier used by txs / certificates
+ *   - owner       : on-chain address that controls the vault
+ *   - balanceTHE  : current balance in THE units (must be >= 0n)
+ *
+ * The optional fields are reserved for future BoT / policy metadata and are
+ * kept optional so existing sims and callers remain valid.
+ */
 export interface Vault {
   readonly id: VaultId;
   readonly owner: Address;
   balanceTHE: Amount;
+
+  // Optional metadata hooks for future packs (BoT / policy / auditing).
+  readonly kind?: "STANDARD" | "TREASURY" | "INSTITUTIONAL";
+  readonly notes?: string;
 }
 
+/**
+ * VaultMap — in-memory collection of vaults keyed by VaultId.
+ */
 export type VaultMap = Map<VaultId, Vault>;
 
-// Create a new empty vault. Fails if the id is already taken.
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+function assertAmountPositive(context: string, amount: Amount): void {
+  if (amount <= 0n) {
+    throw new Error(`${context}: amount must be positive`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Core API
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a new empty vault.
+ *
+ * Invariants:
+ *   - Fails if the vault id is already taken.
+ *   - New vaults always start with balanceTHE = 0n.
+ */
 export function createVault(
   vaults: VaultMap,
   id: VaultId,
@@ -48,39 +92,61 @@ export function createVault(
   return v;
 }
 
-// Deposit THE into an existing vault.
+/**
+ * Read a vault by id or throw if it does not exist.
+ *
+ * This is the canonical way to get a vault from consensus / sims.
+ */
+export function getVault(vaults: VaultMap, id: VaultId): Vault {
+  const v = vaults.get(id);
+  if (!v) {
+    throw new Error(`getVault: unknown vault: ${id}`);
+  }
+  return v;
+}
+
+/**
+ * Non-throwing existence check.
+ */
+export function hasVault(vaults: VaultMap, id: VaultId): boolean {
+  return vaults.has(id);
+}
+
+/**
+ * Deposit THE into an existing vault.
+ *
+ * Invariants:
+ *   - amountTHE > 0n
+ *   - vault must exist
+ */
 export function depositToVault(
   vaults: VaultMap,
   id: VaultId,
   amount: Amount
 ): Vault {
-  if (amount <= 0n) {
-    throw new Error("depositToVault: amount must be positive");
-  }
+  assertAmountPositive("depositToVault", amount);
 
-  const v = vaults.get(id);
-  if (!v) {
-    throw new Error(`depositToVault: unknown vault: ${id}`);
-  }
-
+  const v = getVault(vaults, id);
   v.balanceTHE += amount;
   return v;
 }
 
-// Withdraw THE from an existing vault.
+/**
+ * Withdraw THE from an existing vault.
+ *
+ * Invariants:
+ *   - amountTHE > 0n
+ *   - vault must exist
+ *   - resulting balance cannot go negative
+ */
 export function withdrawFromVault(
   vaults: VaultMap,
   id: VaultId,
   amount: Amount
 ): Vault {
-  if (amount <= 0n) {
-    throw new Error("withdrawFromVault: amount must be positive");
-  }
+  assertAmountPositive("withdrawFromVault", amount);
 
-  const v = vaults.get(id);
-  if (!v) {
-    throw new Error(`withdrawFromVault: unknown vault: ${id}`);
-  }
+  const v = getVault(vaults, id);
 
   if (v.balanceTHE < amount) {
     throw new Error(`withdrawFromVault: insufficient balance in vault: ${id}`);
