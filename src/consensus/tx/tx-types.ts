@@ -15,7 +15,7 @@
 // wire-level tx shape defined here.
 // ---------------------------------------------------------------------------
 
-import type { Address, Amount } from "../../types/primitives";
+import type { Address, Amount, Hash } from "../../types/primitives";
 import type { VaultId } from "../../ledger/vault";
 import type { EuCertificateId } from "../../ledger/eu";
 
@@ -37,13 +37,22 @@ export interface TxTransferTHE {
  * Mint a new EU certificate backed by a specific vault.
  *
  * The actual vault funding / redemption semantics are enforced by higher-level
- * ledger rules; this tx only encodes the intent and identifiers.
+ * ledger rules; this tx only encodes the intent, identifiers, and a minimal
+ * activation metadata set required for fraud-resistance and auditing.
  */
 export interface TxMintEU {
   readonly txType: "MINT_EU";
   readonly owner: Address;
-  readonly euId: EuCertificateId;
+  readonly euCertificateId: EuCertificateId;
   readonly backingVaultId: VaultId;
+
+  // Activation / institution metadata
+  readonly activatedByInstitutionId: string;
+  readonly physicalBearer: boolean;
+
+  // EU measurement + anchoring at issuance
+  readonly oracleValueEUAtIssuance: bigint;
+  readonly chainHashProof: Hash;
 }
 
 /**
@@ -51,7 +60,7 @@ export interface TxMintEU {
  */
 export interface TxRedeemEU {
   readonly txType: "REDEEM_EU";
-  readonly euId: EuCertificateId;
+  readonly euCertificateId: EuCertificateId;
 }
 
 /**

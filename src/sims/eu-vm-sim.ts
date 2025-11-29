@@ -1,7 +1,7 @@
 // TARGET: chain src/sims/eu-vm-sim.ts
 // src/sims/eu-vm-sim.ts
 // ---------------------------------------------------------------------------
-// EU VM SIM (Pack 22.0) — consensus-side MINT_EU / REDEEM_EU
+// EU VM SIM (Pack 22.1) — consensus-side MINT_EU / REDEEM_EU
 // ---------------------------------------------------------------------------
 //
 // Purpose:
@@ -23,14 +23,19 @@ import { applyBlockTx } from "../consensus/tx/tx-dispatcher";
 import type { TxMintEU, TxRedeemEU } from "../consensus/tx/tx-types";
 import { createVault, depositToVault } from "../ledger/vault";
 import { assertEuInvariants } from "../ledger/eu";
-import type { Address, Amount } from "../types/primitives";
+import type { Address, Amount, Hash } from "../types/primitives";
 
 const OWNER: Address = "OWNER_EU_VM_SIM";
 const VAULT_ID = "VAULT_EU_VM_SIM";
 const INITIAL_VAULT_DEPOSIT: Amount = 1_000_000n;
 
+// Dummy anchoring/hash values for the sim.
+const DUMMY_CHAIN_HASH: Hash = "SIM_CHAIN_HASH" as Hash;
+const DUMMY_INSTITUTION_ID = "SIM_TEST_BANK";
+const DUMMY_ORACLE_VALUE_EU: bigint = 1_000n;
+
 export function main(): void {
-  console.log("=== EU VM SIM (Pack 22.0) ===");
+  console.log("=== EU VM SIM (Pack 22.1) ===");
 
   // 1) Start from an empty FullLedgerStateV1.
   const ledger0 = makeEmptyFullLedgerStateV1();
@@ -52,8 +57,12 @@ export function main(): void {
   const mintTx: TxMintEU = {
     txType: "MINT_EU",
     owner: OWNER,
-    euId: "EU_CERT_VM_001",
-    backingVaultId: VAULT_ID
+    euCertificateId: "EU_CERT_VM_001",
+    backingVaultId: VAULT_ID,
+    activatedByInstitutionId: DUMMY_INSTITUTION_ID,
+    physicalBearer: true,
+    oracleValueEUAtIssuance: DUMMY_ORACLE_VALUE_EU,
+    chainHashProof: DUMMY_CHAIN_HASH
   };
 
   const ledger1 = applyBlockTx(ledger0, mintTx);
@@ -65,7 +74,7 @@ export function main(): void {
   // 4) Apply a REDEEM_EU tx via the consensus VM.
   const redeemTx: TxRedeemEU = {
     txType: "REDEEM_EU",
-    euId: mintTx.euId
+    euCertificateId: mintTx.euCertificateId
   };
 
   const ledger2 = applyBlockTx(ledger1, redeemTx);

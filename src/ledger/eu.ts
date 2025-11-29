@@ -28,14 +28,46 @@ import type { ChainState } from "./state";
 
 export type EuCertificateId = string;
 
-export type EuStatus = "ACTIVE" | "REDEEMED";
+export type EuStatus =
+  | "ACTIVE"
+  | "REDEEMED"
+  | "LOST"
+  | "STOLEN"
+  | "FRAUD"
+  | "REISSUED";
 
+/**
+ * EuCertificate — legal-tender EU note metadata.
+ *
+ * NOTE:
+ *   - `owner` here is the activation owner (the on-chain address that
+ *     initiated the mint), not the real-world physical bearer.
+ *   - `physicalBearer = true` indicates that control in the real world is
+ *     determined by who holds the note, not who controls this address.
+ */
 export interface EuCertificate {
   readonly id: EuCertificateId;
+
+  // Legal-tender / activation metadata
   readonly owner: Address;
-  readonly backingVaultId: VaultId;
+  readonly activatedByInstitutionId: string;
+  readonly physicalBearer: boolean;
+
+  // Chain anchoring
   readonly issuedAtHeight: number;
+  readonly chainHashProof: string;
+
+  // EU measurement metadata
+  readonly oracleValueEUAtIssuance: bigint;
+
+  // Vault linkage
+  readonly backingVaultId: VaultId;
+
+  // Lifecycle + recovery metadata
   readonly status: EuStatus;
+  readonly damagedFlag?: boolean;
+  readonly reissueParentId?: EuCertificateId;
+  readonly institutionSignature?: string;
 }
 
 /**

@@ -72,16 +72,24 @@ function runSim(): void {
   const certA: EuCertificate = {
     id: "EU_CERT_A_001",
     owner: ownerA,
-    backingVaultId: vaultA.id,
+    activatedByInstitutionId: "SIM_LEDGER_BANK_A",
+    physicalBearer: true,
     issuedAtHeight: issueHeightA,
+    chainHashProof: "SIM_LEDGER_HASH_A",
+    oracleValueEUAtIssuance: 1_000n,
+    backingVaultId: vaultA.id,
     status: "ACTIVE"
   };
 
   const certB: EuCertificate = {
     id: "EU_CERT_B_001",
     owner: ownerB,
-    backingVaultId: vaultB.id,
+    activatedByInstitutionId: "SIM_LEDGER_BANK_B",
+    physicalBearer: true,
     issuedAtHeight: issueHeightB,
+    chainHashProof: "SIM_LEDGER_HASH_B",
+    oracleValueEUAtIssuance: 2_000n,
+    backingVaultId: vaultB.id,
     status: "ACTIVE"
   };
 
