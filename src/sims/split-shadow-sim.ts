@@ -1,70 +1,118 @@
 // TARGET: chain src/sims/split-shadow-sim.ts
-// src/sims/split-shadow-sim.ts
-// ---------------------------------------------------------------------------
-// SPLIT SHADOW MODE SIM (v0)
-// ---------------------------------------------------------------------------
-// This simulation demonstrates how consensus code could use the split shadow
-// helper to observe split decisions over time without mutating balances or
-// affecting supply. It uses a synthetic price path similar to dev-split-sim,
-// but routes through evaluateSplitInShadow.
-// ---------------------------------------------------------------------------
+/**
+ * Split shadow-mode sim wired to EU oracle.
+ *
+ * We evaluate the split policy in "shadow" alongside a notional chain
+ * to see when splits *would* happen, without mutating any real state.
+ */
 
-import { DEV_PHASE_BLOCKS } from "../emissions/model";
-import { DEFAULT_FEATURE_FLAGS } from "../params/feature-flags";
-import {
-  evaluateSplitInShadow,
-  type SplitShadowConfig,
-  type SplitShadowResult
-} from "../consensus/split-shadow";
+import { euPerThePriceAtHeight } from "./eu-oracle-sim";
 
-function syntheticPrice(height: number): number {
-  const devBlocks = DEV_PHASE_BLOCKS > 0 ? DEV_PHASE_BLOCKS : 1;
-  const t = Math.min(1, Math.max(0, height / devBlocks));
-  return 1.0 + t * 19.0; // 1.0 → 20.0 across dev phase
+interface SplitPolicy {
+  readonly splitThresholdEuPerThe: number;
+  readonly minBlocksBetweenSplits: number;
 }
 
-function runSplitShadowSim(maxBlocks: number = 15000): void {
-  console.log("=== SPLIT SHADOW MODE SIM (v0) ===");
-  console.log("Max blocks:", maxBlocks);
-  console.log("Dev-phase blocks (from model):", DEV_PHASE_BLOCKS);
+interface SplitEngineState {
+  readonly lastSplitHeight: number;
+  readonly cumulativeFactor: bigint;
+}
 
-  const cfg: SplitShadowConfig = {
-    flags: DEFAULT_FEATURE_FLAGS
+interface SplitDecision {
+  readonly shouldSplit: boolean;
+  readonly factor: bigint | null;
+  readonly reason: string;
+}
+
+const DEFAULT_SPLIT_POLICY: SplitPolicy = {
+  splitThresholdEuPerThe: 3.0,
+  minBlocksBetweenSplits: 1000
+};
+
+const INITIAL_SPLIT_STATE: SplitEngineState = {
+  lastSplitHeight: -1,
+  cumulativeFactor: 1n
+};
+
+function stepSplitEngine(
+  prev: SplitEngineState,
+  height: number,
+  euPerThePrice: number,
+  policy: SplitPolicy
+): { next: SplitEngineState; decision: SplitDecision } {
+  let shouldSplit = false;
+  let factor: bigint | null = null;
+  let reason = "below_threshold";
+
+  const crossed = euPerThePrice >= policy.splitThresholdEuPerThe;
+  const intervalOk =
+    prev.lastSplitHeight < 0 ||
+    height - prev.lastSplitHeight >= policy.minBlocksBetweenSplits;
+
+  if (crossed) {
+    if (intervalOk) {
+      shouldSplit = true;
+      factor = 2n;
+      reason = "threshold_met";
+    } else {
+      reason = "min_interval_not_met";
+    }
+  }
+
+  if (!shouldSplit) {
+    return {
+      next: prev,
+      decision: { shouldSplit: false, factor: null, reason }
+    };
+  }
+
+  const next: SplitEngineState = {
+    lastSplitHeight: height,
+    cumulativeFactor: prev.cumulativeFactor * (factor ?? 1n)
   };
 
-  let shadowStateResult: SplitShadowResult | null = null;
+  return {
+    next,
+    decision: { shouldSplit, factor, reason }
+  };
+}
 
+function runSplitShadowSim(): void {
+  console.log("=== SPLIT SHADOW MODE SIM (EU oracle, Pack 27) ===");
+
+  const maxBlocks = 15_000;
+  let shadowState: SplitEngineState = INITIAL_SPLIT_STATE;
   let totalSplits = 0;
 
-  for (let height = 0; height < maxBlocks; height++) {
-    const price = syntheticPrice(height);
+  const sampleHeights = [0, 4_999, 6_443, 9_999, 14_999];
 
-    const result = evaluateSplitInShadow(cfg, {
+  for (let height = 0; height <= maxBlocks; height++) {
+    const price = euPerThePriceAtHeight(height);
+    const { next, decision } = stepSplitEngine(
+      shadowState,
       height,
-      euPerThePrice: price,
-      prevEngineState: shadowStateResult?.nextEngineState
-    });
+      price,
+      DEFAULT_SPLIT_POLICY
+    );
+    shadowState = next;
 
-    if (result.decision.shouldSplit && result.decision.factor != null) {
+    if (decision.shouldSplit && decision.factor != null) {
       totalSplits++;
       console.log("\n--- SHADOW SPLIT EVENT ---");
       console.log("  height:", height);
       console.log("  price EU/THE:", price.toFixed(4));
-      console.log("  factor:", result.decision.factor.toString());
-      console.log("  cumulativeFactor:", result.nextEngineState.cumulativeFactor.toString());
-      console.log("  reason:", result.decision.reason);
+      console.log("  factor:", decision.factor.toString());
+      console.log("  cumulativeFactor:", shadowState.cumulativeFactor.toString());
+      console.log("  reason:", decision.reason);
     }
 
-    shadowStateResult = result;
-
-    if (height === 0 || (height + 1) % 5000 === 0 || height === maxBlocks - 1) {
-      console.log("\n--- HEIGHT", height, "---");
+    if (sampleHeights.includes(height)) {
+      console.log("\n--- HEIGHT SNAPSHOT ---");
+      console.log("  height:", height);
       console.log("  price EU/THE:", price.toFixed(4));
-      console.log("  shouldSplit:", result.decision.shouldSplit);
-      console.log("  reason:", result.decision.reason);
       console.log(
         "  cumulativeFactor:",
-        result.nextEngineState.cumulativeFactor.toString()
+        shadowState.cumulativeFactor.toString()
       );
     }
   }
@@ -75,4 +123,6 @@ function runSplitShadowSim(maxBlocks: number = 15000): void {
   console.log("=== SPLIT SHADOW MODE SIM COMPLETE ===");
 }
 
-runSplitShadowSim();
+if (require.main === module) {
+  runSplitShadowSim();
+}
