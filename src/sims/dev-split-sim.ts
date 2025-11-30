@@ -8,7 +8,7 @@
 //   • We stay entirely inside the dev phase.
 //   • We model block rewards in "THE units" and how they behave across splits.
 //   • We use the split-policy surface + split-orchestrator to decide when a
-//     split would occur, based on a synthetic rising THE/EU price path.
+//     split would occur, based on a synthetic rising EU/THE (EU per 1 THE) price path.
 //   • We keep track of:
 //       - cumulative split factor
 //       - reward units per block
@@ -29,7 +29,7 @@ import {
 
 interface DevSplitSnapshot {
   height: number;
-  thePerEuPrice: number;
+  euPerThePrice: number;
   cumulativeFactor: bigint;
   rewardUnits: bigint;
   normalizedRewardValue: number;
@@ -39,7 +39,7 @@ interface DevSplitSnapshot {
 
 function syntheticDevPricePath(height: number): number {
   // Very simple synthetic price model for now:
-  //   • Starts near THE/EU = 1.0
+  //   • Starts near EU/THE = 1.0
   //   • Ramps up linearly over the dev phase toward ~20.0
   //
   // This ensures we will eventually cross the 2x, 3x, 5x thresholds from
@@ -67,7 +67,7 @@ function runDevSplitSim(maxBlocks: number = 10_000): void {
 
     const { state: nextState, decision } = stepSplitEngine(engineState, {
       height,
-      thePerEuPrice: price
+      euPerThePrice: price
     });
 
     const didSplit = decision.shouldSplit && decision.factor != null;
@@ -80,7 +80,7 @@ function runDevSplitSim(maxBlocks: number = 10_000): void {
 
     const snap: DevSplitSnapshot = {
       height,
-      thePerEuPrice: price,
+      euPerThePrice: price,
       cumulativeFactor: nextState.cumulativeFactor,
       rewardUnits,
       normalizedRewardValue,
@@ -98,7 +98,7 @@ function runDevSplitSim(maxBlocks: number = 10_000): void {
       height === limit - 1
     ) {
       console.log("\n--- HEIGHT", height, "---");
-      console.log("  THE/EU price:", price.toFixed(4));
+      console.log("  EU/THE price:", price.toFixed(4));
       console.log("  cumulativeFactor:", nextState.cumulativeFactor.toString());
       console.log("  rewardUnits THE:", rewardUnits.toString());
       console.log("  normalizedRewardValue (THE):", normalizedRewardValue.toFixed(4));
@@ -117,7 +117,7 @@ function runDevSplitSim(maxBlocks: number = 10_000): void {
     for (const e of splitEvents) {
       console.log(
         "  height=" + e.height,
-        "price=" + e.thePerEuPrice.toFixed(4),
+        "price EU/THE=" + e.euPerThePrice.toFixed(4),
         "cumFactor=" + e.cumulativeFactor.toString()
       );
     }

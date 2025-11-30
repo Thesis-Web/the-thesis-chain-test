@@ -21,8 +21,8 @@ import {
 
 export interface SplitHookContext {
   readonly height: number;
-  // THE/EU price at this height, or null if oracle data is unavailable.
-  readonly thePerEuPrice: number | null;
+  // EU/THE (EU per 1 THE) price at this height, or null if oracle data is unavailable.
+  readonly euPerThePrice: number | null;
 }
 
 export interface SplitHookEnv {
@@ -54,7 +54,7 @@ export function runSplitShadowHook(
 
   const result = evaluateSplitInShadow(cfg, {
     height: ctx.height,
-    thePerEuPrice: ctx.thePerEuPrice,
+    euPerThePrice: ctx.euPerThePrice,
     prevEngineState
   });
 

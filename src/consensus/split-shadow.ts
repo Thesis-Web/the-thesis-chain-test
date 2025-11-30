@@ -32,7 +32,7 @@ export interface SplitShadowConfig {
 
 export interface SplitShadowInput {
   readonly height: number;
-  readonly thePerEuPrice: number | null;
+  readonly euPerThePrice: number | null;
   readonly prevEngineState?: SplitEngineState;
 }
 
@@ -84,7 +84,7 @@ export function evaluateSplitInShadow(
 
   const { state, decision } = stepSplitEngine(prevState, {
     height: input.height,
-    thePerEuPrice: input.thePerEuPrice,
+    euPerThePrice: input.euPerThePrice,
     policy
   });
 

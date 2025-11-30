@@ -181,7 +181,7 @@ export function applyBlock<LState>(
 
   const hookCtx: SplitHookContext = {
     height: block.header.height,
-    thePerEuPrice: null // v0: no oracle wiring yet
+    euPerThePrice: null // v0: no oracle wiring yet
   };
 
   const splitResult = runSplitShadowHook(

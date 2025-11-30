@@ -32,7 +32,7 @@ export function initSplitEngineState(): SplitEngineState {
 
 export interface SplitStepInput {
   readonly height: number;
-  readonly thePerEuPrice: number | null;
+  readonly euPerThePrice: number | null;
   readonly policy?: SplitPolicyParams;
 }
 
@@ -57,7 +57,7 @@ export function stepSplitEngine(
 
   const decision = evaluateSplitDecision({
     height: input.height,
-    thePerEuPrice: input.thePerEuPrice,
+    euPerThePrice: input.euPerThePrice,
     lastSplitHeight: prevState.lastSplitHeight,
     params: policy
   });

@@ -41,7 +41,7 @@ function runSplitShadowSim(maxBlocks: number = 15000): void {
 
     const result = evaluateSplitInShadow(cfg, {
       height,
-      thePerEuPrice: price,
+      euPerThePrice: price,
       prevEngineState: shadowStateResult?.nextEngineState
     });
 
@@ -49,7 +49,7 @@ function runSplitShadowSim(maxBlocks: number = 15000): void {
       totalSplits++;
       console.log("\n--- SHADOW SPLIT EVENT ---");
       console.log("  height:", height);
-      console.log("  price THE/EU:", price.toFixed(4));
+      console.log("  price EU/THE:", price.toFixed(4));
       console.log("  factor:", result.decision.factor.toString());
       console.log("  cumulativeFactor:", result.nextEngineState.cumulativeFactor.toString());
       console.log("  reason:", result.decision.reason);
@@ -59,7 +59,7 @@ function runSplitShadowSim(maxBlocks: number = 15000): void {
 
     if (height === 0 || (height + 1) % 5000 === 0 || height === maxBlocks - 1) {
       console.log("\n--- HEIGHT", height, "---");
-      console.log("  price THE/EU:", price.toFixed(4));
+      console.log("  price EU/THE:", price.toFixed(4));
       console.log("  shouldSplit:", result.decision.shouldSplit);
       console.log("  reason:", result.decision.reason);
       console.log(
