@@ -1,7 +1,7 @@
 // TARGET: chain src/consensus/consensus-delta.ts
 // src/consensus/consensus-delta.ts
 // ---------------------------------------------------------------------------
-// Pack 30 + 36 — ConsensusDelta helper with optional LedgerDelta bridge
+// Pack 30 + 36 + 37 — ConsensusDelta helper with LedgerDelta + EuRegistryDelta
 // ---------------------------------------------------------------------------
 // This module defines a small, pure helper that derives a ConsensusDelta
 // snapshot from:
@@ -14,10 +14,12 @@
 // It is explicitly *non-consensus-critical*:
 //   • It never mutates ChainState.
 //   • It is never used to decide block validity.
+//   • It is SAFE to recompute in sims, tools, explorers.
 //
-// Pack 36 extends the view with an optional LedgerDelta, derived in a
-// best-effort way from the consensus-level ledger snapshots when they
-// follow the canonical L1 ledger shape (accounts + vaults maps).
+// Pack 36: adds an optional LedgerDelta bridge derived from the consensus
+//          ledger snapshots when they follow the canonical L1 shape.
+// Pack 37: adds an optional EuRegistryDelta bridge when the ledger exposes
+//          a EuRegistry (e.g. FullLedgerStateV1.eu).
 // ---------------------------------------------------------------------------
 
 import type { Block } from "./block";
@@ -27,12 +29,19 @@ import type { SplitEngineState } from "../splits/split-orchestrator";
 import type { SplitEvent, SplitEventLog } from "./split-events";
 import type { EmissionBreakdown } from "../emissions/model";
 import type { FeatureFlags } from "../params/feature-flags";
+
 import type { LedgerDelta } from "../ledger/ledger-delta";
 import {
   createEmptyLedgerDelta,
   recordAccountChange,
   recordVaultChange,
 } from "../ledger/ledger-delta";
+
+import type { EuRegistryDelta } from "../ledger/eu-registry-delta";
+import {
+  makeEuRegistrySnapshot,
+  computeEuRegistryDelta,
+} from "../ledger/eu-registry-delta";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -71,10 +80,10 @@ export interface ConsensusDelta {
   readonly powEnforced: boolean;
 
   // Optional ledger delta view (Pack 36 bridge).
-  // This is only populated when the underlying ledger snapshots follow the
-  // canonical L1 ledger shape (accounts + vaults maps). For other ledger
-  // types, this will be undefined.
   readonly ledgerDelta?: LedgerDelta;
+
+  // Optional EU registry delta view (Pack 37 bridge).
+  readonly euRegistryDelta?: EuRegistryDelta;
 }
 
 // ---------------------------------------------------------------------------
@@ -98,48 +107,69 @@ function deriveSplitEvent<LState>(
   return null;
 }
 
+// Helper to extract the accounts/vaults pair from a generic ledger state.
+// This supports both:
+//   • legacy ledger states with { accounts, vaults }
+//   • FullLedgerStateV1-style states with { chain: { accounts, vaults }, eu: ... }
+function extractAccountsAndVaults(
+  ledger: unknown
+): {
+  accounts?: Map<string, any>;
+  vaults?: Map<string, any>;
+} {
+  if (!ledger) return {};
+
+  const root: any = ledger as any;
+
+  if (root.accounts instanceof Map || root.vaults instanceof Map) {
+    return {
+      accounts: root.accounts instanceof Map ? root.accounts : undefined,
+      vaults: root.vaults instanceof Map ? root.vaults : undefined,
+    };
+  }
+
+  const chain = root.chain;
+  if (chain && (chain.accounts instanceof Map || chain.vaults instanceof Map)) {
+    return {
+      accounts: chain.accounts instanceof Map ? chain.accounts : undefined,
+      vaults: chain.vaults instanceof Map ? chain.vaults : undefined,
+    };
+  }
+
+  return {};
+}
+
 /**
  * Best-effort derivation of a LedgerDelta from generic ledger snapshots.
  *
- * This intentionally performs only a shallow, shape-based inspection of the
- * ledger. When the ledger matches the canonical L1 form:
- *
- *   { accounts: Map<string, { balanceTHE: bigint; ... }>,
- *     vaults:   Map<string, VaultLike> }
- *
- * …we compute account + vault deltas. EU certificate deltas are left for
- * later packs once the EU registry is fully integrated.
+ * When the underlying ledger exposes accounts + vaults in the canonical
+ * L1 shape, we compute account + vault deltas. EU certificate deltas are
+ * handled by the dedicated EuRegistryDelta bridge (Pack 37).
  */
 function deriveLedgerDeltaFromLedgerStateAny(
   prevLedger: unknown,
   nextLedger: unknown
 ): LedgerDelta | undefined {
-  if (!prevLedger || !nextLedger) return undefined;
+  const { accounts: beforeAccounts, vaults: beforeVaults } =
+    extractAccountsAndVaults(prevLedger);
+  const { accounts: afterAccounts, vaults: afterVaults } =
+    extractAccountsAndVaults(nextLedger);
 
-  const before: any = prevLedger;
-  const after: any = nextLedger;
-
-  const hasAccounts =
-    before.accounts instanceof Map && after.accounts instanceof Map;
-  const hasVaults =
-    before.vaults instanceof Map && after.vaults instanceof Map;
-
-  if (!hasAccounts && !hasVaults) {
-    return undefined;
-  }
+  if (!beforeAccounts && !beforeVaults) return undefined;
+  if (!afterAccounts && !afterVaults) return undefined;
 
   const delta = createEmptyLedgerDelta();
 
-  if (hasAccounts) {
+  if (beforeAccounts && afterAccounts) {
     const allAddrs = new Set<string>();
-    for (const addr of before.accounts.keys()) allAddrs.add(addr);
-    for (const addr of after.accounts.keys()) allAddrs.add(addr);
+    for (const addr of beforeAccounts.keys()) allAddrs.add(addr);
+    for (const addr of afterAccounts.keys()) allAddrs.add(addr);
 
     for (const addr of allAddrs) {
-      const bAcct = before.accounts.get(addr) as
+      const bAcct = beforeAccounts.get(addr) as
         | { balanceTHE: bigint; balanceEU?: bigint; nonce?: number }
         | undefined;
-      const aAcct = after.accounts.get(addr) as
+      const aAcct = afterAccounts.get(addr) as
         | { balanceTHE: bigint; balanceEU?: bigint; nonce?: number }
         | undefined;
 
@@ -167,18 +197,60 @@ function deriveLedgerDeltaFromLedgerStateAny(
     }
   }
 
-  if (hasVaults) {
+  if (beforeVaults && afterVaults) {
     const allVaultIds = new Set<string>();
-    for (const id of before.vaults.keys()) allVaultIds.add(id);
-    for (const id of after.vaults.keys()) allVaultIds.add(id);
+    for (const id of beforeVaults.keys()) allVaultIds.add(id);
+    for (const id of afterVaults.keys()) allVaultIds.add(id);
 
     for (const id of allVaultIds) {
-      const bVault = before.vaults.get(id) ?? null;
-      const aVault = after.vaults.get(id) ?? null;
+      const bVault = beforeVaults.get(id) ?? null;
+      const aVault = afterVaults.get(id) ?? null;
       if (bVault !== null || aVault !== null) {
         recordVaultChange(delta, id, bVault, aVault);
       }
     }
+  }
+
+  return delta;
+}
+
+/**
+ * Best-effort derivation of a EuRegistryDelta from generic ledger snapshots.
+ *
+ * This looks for a EuRegistry-shaped object hanging off the ledger, using the
+ * most common naming patterns:
+ *
+ *   • FullLedgerStateV1.eu
+ *   • ledger.euRegistry
+ *
+ * If no such registry is found, or there are no differences, this returns
+ * undefined.
+ */
+function deriveEuRegistryDeltaFromLedgerStateAny(
+  prevLedger: unknown,
+  nextLedger: unknown
+): EuRegistryDelta | undefined {
+  if (!prevLedger || !nextLedger) return undefined;
+
+  const beforeAny: any = prevLedger as any;
+  const afterAny: any = nextLedger as any;
+
+  const beforeEu =
+    beforeAny.eu ?? beforeAny.euRegistry ?? undefined;
+  const afterEu =
+    afterAny.eu ?? afterAny.euRegistry ?? undefined;
+
+  if (!beforeEu || !afterEu) return undefined;
+  if (!(beforeEu.byId instanceof Map) || !(afterEu.byId instanceof Map)) {
+    return undefined;
+  }
+
+  const snapBefore = makeEuRegistrySnapshot(beforeEu);
+  const snapAfter = makeEuRegistrySnapshot(afterEu);
+  const delta = computeEuRegistryDelta(snapBefore, snapAfter);
+
+  if (delta.certs.size === 0) {
+    return undefined;
   }
 
   return delta;
@@ -203,10 +275,15 @@ export function makeConsensusDelta<LState>(
 
   const splitEvent = deriveSplitEvent(prevState, nextState);
 
-  // Best-effort ledger delta bridge (Pack 36).
+  // Best-effort ledger + EU registry delta bridges.
   const ledgerDelta = deriveLedgerDeltaFromLedgerStateAny(
-    (prevState as any).ledger,
-    (nextState as any).ledger
+    prevState.ledger,
+    nextState.ledger
+  );
+
+  const euRegistryDelta = deriveEuRegistryDeltaFromLedgerStateAny(
+    prevState.ledger,
+    nextState.ledger
   );
 
   return {
@@ -226,5 +303,6 @@ export function makeConsensusDelta<LState>(
 
     powEnforced: flags.powEnforcement,
     ledgerDelta,
+    euRegistryDelta,
   };
 }
