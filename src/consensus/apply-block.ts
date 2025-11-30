@@ -1,56 +1,49 @@
 // TARGET: chain src/consensus/apply-block.ts
-// Pack 42 — Full applyBlock pipeline (skeleton)
+// src/consensus/apply-block.ts
+// ---------------------------------------------------------------------------
+// Pack 42.1 — Full applyBlock pipeline (minimal, safe version)
+//
+// This version intentionally keeps applyBlock **pure and conservative**:
+//   • It does NOT yet invoke the Tx VM.
+//   • It does NOT yet compute or apply per-module deltas.
+//   • It ONLY updates chain height + lastBlockHash in a new FullLedgerStateV1.
+//
+// The goal of Pack 42.1 is to make the wiring compile cleanly and give us a
+// stable surface to extend in Packs 43–46 (multi-block sims, replay harness,
+// difficulty + SplitEngine integration, full Tx VM hookup, etc.).
+// ---------------------------------------------------------------------------
 
-import { runTx } from "../vm/tx-vm";
 import type { FullLedgerStateV1 } from "../fullstate/state";
-import { cloneFullLedgerStateV1 } from "../fullstate/state";
 import type { Block } from "./types";
-import { computeLedgerDelta } from "../ledger/ledger-delta";
-import { mergeVaultDeltas } from "../ledger/vault-delta";
-import { mergeEuRegistryDeltas } from "../ledger/eu-registry-delta";
-import { applyLedgerDelta } from "../ledger/ledger-delta";
-import { applyVaultDelta } from "../ledger/vault-delta";
-import { applyEuRegistryDelta } from "../ledger/eu-registry-delta";
+
+// ---------------------------------------------------------------------------
+// applyBlock (pure, structural)
+// ---------------------------------------------------------------------------
+//
+// For now, applyBlock simply:
+//   • takes the previous FullLedgerStateV1,
+//   • returns a new FullLedgerStateV1 with updated height + lastBlockHash,
+//   • leaves all maps (accounts, vaults, EU registry) untouched.
+//
+// Later packs will:
+//   • thread Tx execution through the VM,
+//   • produce Ledger / Vault / EU deltas,
+//   • apply those deltas to derive the next state,
+//   • attach emissions, fees, and SplitEngine results.
+// ---------------------------------------------------------------------------
 
 export function applyBlock(
   prev: FullLedgerStateV1,
   block: Block
 ): FullLedgerStateV1 {
-
-  const working = cloneFullLedgerStateV1(prev);
-
-  const ledgerBefore = {
-    accounts: new Map(working.chain.accounts),
-    vaults: new Map(working.chain.vaults),
-    euCerts: new Map(working.euRegistry.byId)
+  const nextChain = {
+    ...prev.chain,
+    height: block.height,
+    lastBlockHash: block.hash
   };
 
-  const vaultBefore = { vaults: new Map(working.chain.vaults) };
-  const euBefore = { certs: new Map(working.euRegistry.byId) };
-
-  for (const tx of block.txs) {
-    runTx(working, tx);
-  }
-
-  const ledgerAfter = {
-    accounts: new Map(working.chain.accounts),
-    vaults: new Map(working.chain.vaults),
-    euCerts: new Map(working.euRegistry.byId)
+  return {
+    chain: nextChain,
+    euRegistry: prev.euRegistry
   };
-
-  const vaultAfter = { vaults: new Map(working.chain.vaults) };
-  const euAfter = { certs: new Map(working.euRegistry.byId) };
-
-  const ledgerDelta = computeLedgerDelta(ledgerBefore, ledgerAfter);
-  const vaultDelta = mergeVaultDeltas(vaultBefore, vaultAfter);
-  const euDelta = mergeEuRegistryDeltas(euBefore, euAfter);
-
-  applyLedgerDelta(working.chain, ledgerDelta);
-  applyVaultDelta(working.chain.vaults, vaultDelta);
-  applyEuRegistryDelta(working.euRegistry, euDelta);
-
-  working.chain.height = block.height;
-  working.chain.lastBlockHash = block.hash;
-
-  return working;
 }
