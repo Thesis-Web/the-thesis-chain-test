@@ -7,7 +7,7 @@
 // This module layers EU Certificates on top of the existing ChainState
 // (accounts + vaults) without changing the core ledger types.
 //
-// Per docs/sections/030-ledger.md, 085-split-engine.md, 090-oracle.md:
+// Per docs/sections/030-ledger-architecture.md, 085-split-engine-spec.md, 070-oracles-and-energy-measurement.md:
 //   • Each EU Certificate is a 1:1 claim on a specific vault's THE contents.
 //   • Vaults remain the source of truth for balances (balanceTHE).
 //   • EU is a *claim* mapped onto those vaults, not a new asset type inside

@@ -6,6 +6,7 @@ import type { SplitEngineState } from "../splits/split-orchestrator";
 import { initSplitEngineState } from "../splits/split-orchestrator";
 import type { DifficultyState } from "./difficulty-governor";
 import { INITIAL_DIFFICULTY_STATE } from "./difficulty-governor";
+import type { SplitEventLog } from "./split-events";
 
 export interface ChainState<LState = unknown> {
   readonly height: number;
@@ -14,6 +15,7 @@ export interface ChainState<LState = unknown> {
   readonly ledger: LState;
   readonly splitEngineState: SplitEngineState;
   readonly difficulty: DifficultyState;
+  readonly splitEvents: SplitEventLog;
 }
 
 /**
@@ -30,6 +32,7 @@ export function makeGenesisState<LState>(ledger: LState): ChainState<LState> {
     tipBlock: null,
     ledger,
     splitEngineState: initSplitEngineState(),
-    difficulty: INITIAL_DIFFICULTY_STATE
+    difficulty: INITIAL_DIFFICULTY_STATE,
+    splitEvents: []
   };
 }

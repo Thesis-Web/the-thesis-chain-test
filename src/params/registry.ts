@@ -67,13 +67,12 @@ export interface DifficultyParams {
 }
 
 export const DIFFICULTY_PARAMS_V1: DifficultyParams = {
-  maxAdjustmentPerBlock: 0.25,
-  // NOTE: These are placeholders and should match the real defaults from
-  // emissions/difficulty-governor.ts. They are included here for non-consensus
-  // sims and tooling. Before wiring this into consensus code, we must ensure
-  // equality with the canonical values.
-  minTarget: 1n << 200n,
-  maxTarget: (1n << 255n) - 1n
+  // Mirrors DEFAULT_DIFFICULTY_CONFIG in src/emissions/difficulty-governor.ts.
+  // If that config changes, this registry entry MUST be kept in sync before
+  // being used in any consensus-critical code.
+  maxAdjustmentPerBlock: 0.05,
+  minTarget: 1n,
+  maxTarget: (1n << 255n)
 };
 
 // ---------------------------------------------------------------------------

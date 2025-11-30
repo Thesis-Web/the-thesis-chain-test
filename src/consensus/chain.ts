@@ -37,6 +37,7 @@ import {
 
 import { applyDifficultyStep } from "./apply-difficulty";
 import { ensurePowMeetsTarget } from "./pow";
+import { appendSplitEvent, type SplitEvent, type SplitEventLog } from "./split-events";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -58,6 +59,11 @@ export interface ApplyBlockOptions<LState> {
   // Caller-supplied ledger transition function. If omitted, the ledger is
   // treated as inert and carried forward unchanged.
   readonly applyLedgerFn?: (prevLedger: LState, block: Block) => LState;
+
+  // Optional split shadow input for sims / dev: EU/THE (EU per 1 THE) price
+  // to feed the split engine at this height. In production, consensus SHOULD
+  // derive this from oracle state / events instead of passing it ad-hoc.
+  readonly euPerThePrice?: number | null;
 }
 
 export interface ApplyBlockResult<LState> {
@@ -181,7 +187,7 @@ export function applyBlock<LState>(
 
   const hookCtx: SplitHookContext = {
     height: block.header.height,
-    euPerThePrice: null // v0: no oracle wiring yet
+    euPerThePrice: opts.euPerThePrice ?? null
   };
 
   const splitResult = runSplitShadowHook(
@@ -189,6 +195,19 @@ export function applyBlock<LState>(
     hookCtx,
     prevState.splitEngineState
   );
+
+  let nextSplitEvents: SplitEventLog = (prevState as any).splitEvents ?? [];
+
+  if (splitResult.decision.shouldSplit && splitResult.decision.factor != null) {
+    const evt: SplitEvent = {
+      height: block.header.height,
+      factor: splitResult.decision.factor,
+      cumulativeFactor: splitResult.nextEngineState.cumulativeFactor,
+      euPerThePrice: hookCtx.euPerThePrice ?? Number.NaN,
+      reason: splitResult.decision.reason ?? "unknown"
+    };
+    nextSplitEvents = appendSplitEvent(nextSplitEvents, evt);
+  }
 
   // -------------------------------------------------------------------------
   // Difficulty evolution
@@ -217,7 +236,8 @@ export function applyBlock<LState>(
     tipBlock: block,
     ledger: nextLedger,
     splitEngineState: splitResult.nextEngineState,
-    difficulty: diffStep.next
+    difficulty: diffStep.next,
+    splitEvents: nextSplitEvents
   };
 
   return {
