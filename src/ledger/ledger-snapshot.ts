@@ -1,50 +1,22 @@
 // TARGET: chain src/ledger/ledger-snapshot.ts
-// src/ledger/ledger-snapshot.ts
-// ---------------------------------------------------------------------------
-// Pack 35 — Snapshot adapter from ChainState → LedgerSnapshot
-// ---------------------------------------------------------------------------
-//
-// This module provides a thin adapter that turns the in-memory ChainState
-// (accounts + vaults) into the neutral LedgerSnapshot shape defined in
-// src/ledger/ledger-delta.ts.
-//
-// For now there is no on-chain EU registry wired into ChainState, so we
-// simply expose an empty euCerts map. Later, when EuRegistry is threaded
-// through ChainState, a corresponding adapter can be added.
-// ---------------------------------------------------------------------------
+// Pack 34/35 – FullLedgerSnapshot generator
 
-import type { ChainState, AccountState } from "./state";
-import type { Vault } from "./vault";
-import type {
-  LedgerSnapshot,
-  AccountSnapshot,
-  VaultSnapshot
-} from "./ledger-delta";
+import type { ChainState } from "./state";
 
-export function snapshotFromChainState(state: ChainState): LedgerSnapshot {
-  const accounts = new Map<string, AccountSnapshot>();
-  const vaults = new Map<string, VaultSnapshot>();
-  const euCerts = new Map<string, never>(); // placeholder for future EuRegistry wiring
+export interface FullLedgerSnapshot {
+  accounts: Map<string, bigint>;
+  vaults: Map<string, { owner: string; balanceTHE: bigint }>;
+}
 
-  for (const [addr, acct] of state.accounts.entries()) {
-    const a: AccountState = acct;
-    accounts.set(addr, {
-      THE: a.balanceTHE,
-      EU: 0n,
-      nonce: 0
-    });
-  }
+export function makeLedgerSnapshot(state: ChainState): FullLedgerSnapshot {
+  const accounts = new Map<string, bigint>();
+  const vaults = new Map<string, { owner: string; balanceTHE: bigint }>();
 
-  for (const [vaultId, vault] of state.vaults.entries()) {
-    const v = vault as Vault;
-    vaults.set(vaultId, {
-      THE: v.balanceTHE
-    });
-  }
+  for (const [addr, acct] of state.accounts.entries())
+    accounts.set(addr, acct.balanceTHE);
 
-  return {
-    accounts,
-    vaults,
-    euCerts
-  };
+  for (const [vid, v] of state.vaults.entries())
+    vaults.set(vid, { owner: v.owner, balanceTHE: v.balanceTHE });
+
+  return { accounts, vaults };
 }

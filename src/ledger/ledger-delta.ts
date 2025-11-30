@@ -1,182 +1,76 @@
 // TARGET: chain src/ledger/ledger-delta.ts
-// src/ledger/ledger-delta.ts
-// ---------------------------------------------------------------------------
-// Pack 34 — Neutral LedgerSnapshot + LedgerDelta utilities
-// ---------------------------------------------------------------------------
-//
-// This module defines a neutral snapshot + delta format for the L1 ledger.
-// It is intentionally decoupled from any concrete in-memory ChainState so
-// that it can be used from sims, tools, or future Rust ports.
-//
-// The pattern is:
-//   • Take snapshots (before/after) in a neutral form (LedgerSnapshot).
-//   • Compute a LedgerDelta by diffing those snapshots.
-//   • Use the delta for logging, invariants, remote sync, etc.
-// ---------------------------------------------------------------------------
+// Pack 34/35 – Full LedgerDelta Engine
 
-export interface AccountSnapshot {
-  readonly THE: bigint;
-  readonly EU: bigint;
-  readonly nonce: number;
-}
-
-export interface VaultSnapshot {
-  readonly THE: bigint;
-}
-
-export interface EuCertSnapshot {
-  readonly faceEU: bigint;
-  readonly status: string;
-  readonly activatedAt: number | null;
-}
-
-export interface LedgerSnapshot {
-  readonly accounts: Map<string, AccountSnapshot>;
-  readonly vaults: Map<string, VaultSnapshot>;
-  readonly euCerts: Map<string, EuCertSnapshot>;
-}
+import type { ChainState } from "./state";
+import type { Address } from "../types/primitives";
+import type { VaultId, Vault } from "./vault";
+import type { EuCertificateId, EuCertificate } from "./eu";
 
 export interface AccountDelta {
-  readonly before: AccountSnapshot | null;
-  readonly after: AccountSnapshot | null;
+  before: { balanceTHE: bigint; balanceEU?: bigint; nonce?: number; } | null;
+  after: { balanceTHE: bigint; balanceEU?: bigint; nonce?: number; } | null;
 }
 
-export interface VaultDelta {
-  readonly before: VaultSnapshot | null;
-  readonly after: VaultSnapshot | null;
-}
-
-export interface EuCertDelta {
-  readonly before: EuCertSnapshot | null;
-  readonly after: EuCertSnapshot | null;
-}
+export interface VaultDelta { before: Vault | null; after: Vault | null; }
+export interface EuCertDelta { before: EuCertificate | null; after: EuCertificate | null; }
 
 export interface LedgerDelta {
-  readonly accounts: Map<string, AccountDelta>;
-  readonly vaults: Map<string, VaultDelta>;
-  readonly euCerts: Map<string, EuCertDelta>;
+  accounts: Map<Address, AccountDelta>;
+  vaults: Map<VaultId, VaultDelta>;
+  euCerts: Map<EuCertificateId, EuCertDelta>;
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function cloneAccountSnapshot(a: AccountSnapshot): AccountSnapshot {
-  return { THE: a.THE, EU: a.EU, nonce: a.nonce };
+export function createEmptyLedgerDelta(): LedgerDelta {
+  return { accounts: new Map(), vaults: new Map(), euCerts: new Map() };
 }
 
-function cloneVaultSnapshot(v: VaultSnapshot): VaultSnapshot {
-  return { THE: v.THE };
+export function recordAccountChange(delta: LedgerDelta, addr: Address,
+  before: AccountDelta["before"], after: AccountDelta["after"]): void {
+  delta.accounts.set(addr, { before, after });
 }
 
-function cloneEuCertSnapshot(e: EuCertSnapshot): EuCertSnapshot {
-  return {
-    faceEU: e.faceEU,
-    status: e.status,
-    activatedAt: e.activatedAt
+export function recordVaultChange(delta: LedgerDelta, vaultId: VaultId,
+  before: VaultDelta["before"], after: VaultDelta["after"]): void {
+  delta.vaults.set(vaultId, { before, after });
+}
+
+export function recordEuCertChange(delta: LedgerDelta, certId: EuCertificateId,
+  before: EuCertDelta["before"], after: EuCertDelta["after"]): void {
+  delta.euCerts.set(certId, { before, after });
+}
+
+export function applyLedgerDelta(state: ChainState, delta: LedgerDelta): ChainState {
+  const next: ChainState = {
+    height: state.height,
+    lastBlockHash: state.lastBlockHash,
+    accounts: new Map(state.accounts),
+    vaults: new Map(state.vaults)
   };
-}
 
-function diffMap<K extends string, S, D>(
-  before: Map<K, S>,
-  after: Map<K, S>,
-  mkDelta: (b: S | null, a: S | null) => D
-): Map<K, D> {
-  const result = new Map<K, D>();
-  const allKeys = new Set<K>();
-  for (const k of before.keys()) allKeys.add(k);
-  for (const k of after.keys()) allKeys.add(k);
-
-  for (const key of allKeys) {
-    const b = before.get(key) ?? null;
-    const a = after.get(key) ?? null;
-    const delta = mkDelta(b, a);
-    result.set(key, delta);
+  for (const [addr, ch] of delta.accounts) {
+    if (ch.after === null) next.accounts.delete(addr);
+    else next.accounts.set(addr, { balanceTHE: ch.after.balanceTHE });
   }
 
-  return result;
-}
+  for (const [vid, ch] of delta.vaults) {
+    if (ch.after === null) next.vaults.delete(vid);
+    else next.vaults.set(vid, ch.after);
+  }
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
-export function computeLedgerDelta(
-  before: LedgerSnapshot,
-  after: LedgerSnapshot
-): LedgerDelta {
-  const accounts = diffMap(
-    before.accounts,
-    after.accounts,
-    (b, a): AccountDelta => ({
-      before: b ? cloneAccountSnapshot(b) : null,
-      after: a ? cloneAccountSnapshot(a) : null
-    })
-  );
-
-  const vaults = diffMap(
-    before.vaults,
-    after.vaults,
-    (b, a): VaultDelta => ({
-      before: b ? cloneVaultSnapshot(b) : null,
-      after: a ? cloneVaultSnapshot(a) : null
-    })
-  );
-
-  const euCerts = diffMap(
-    before.euCerts,
-    after.euCerts,
-    (b, a): EuCertDelta => ({
-      before: b ? cloneEuCertSnapshot(b) : null,
-      after: a ? cloneEuCertSnapshot(a) : null
-    })
-  );
-
-  return { accounts, vaults, euCerts };
+  return next;
 }
 
 export function printLedgerDelta(delta: LedgerDelta): void {
-  // Accounts
   console.log("Accounts delta:");
-  if (delta.accounts.size === 0) {
-    console.log("  (none)");
-  } else {
-    for (const [addr, d] of delta.accounts.entries()) {
-      const before = d.before
-        ? `{THE=${d.before.THE},EU=${d.before.EU},nonce=${d.before.nonce}}`
-        : "null";
-      const after = d.after
-        ? `{THE=${d.after.THE},EU=${d.after.EU},nonce=${d.after.nonce}}`
-        : "null";
-      console.log(`  addr=${addr} before=${before} after=${after}`);
-    }
+  for (const [addr, ch] of delta.accounts.entries()) {
+    console.log(`  addr=${addr} before=${JSON.stringify(ch.before)} after=${JSON.stringify(ch.after)}`);
   }
-
-  // Vaults
   console.log("Vaults delta:");
-  if (delta.vaults.size === 0) {
-    console.log("  (none)");
-  } else {
-    for (const [vaultId, d] of delta.vaults.entries()) {
-      const before = d.before ? `{THE=${d.before.THE}}` : "null";
-      const after = d.after ? `{THE=${d.after.THE}}` : "null";
-      console.log(`  vault=${vaultId} before=${before} after=${after}`);
-    }
+  for (const [vid, ch] of delta.vaults.entries()) {
+    console.log(`  vault=${vid} before=${JSON.stringify(ch.before)} after=${JSON.stringify(ch.after)}`);
   }
-
-  // EU certificates
   console.log("EU certificates delta:");
-  if (delta.euCerts.size === 0) {
-    console.log("  (none)");
-  } else {
-    for (const [id, d] of delta.euCerts.entries()) {
-      const b = d.before;
-      const a = d.after;
-      const fmt = (x: EuCertSnapshot | null) =>
-        x
-          ? `{faceEU=${x.faceEU},status=${x.status},activatedAt=${x.activatedAt}}`
-          : "null";
-      console.log(`  cert=${id} before=${fmt(b)} after=${fmt(a)}`);
-    }
+  for (const [cid, ch] of delta.euCerts.entries()) {
+    console.log(`  cert=${cid} before=${JSON.stringify(ch.before)} after=${JSON.stringify(ch.after)}`);
   }
 }

@@ -1,56 +1,27 @@
 // TARGET: chain src/sims/ledger-delta-chain-sim.ts
-// src/sims/ledger-delta-chain-sim.ts
-// ---------------------------------------------------------------------------
-// Pack 35 — LedgerDelta demo on real ChainState
-// ---------------------------------------------------------------------------
-//
-// This sim exercises the snapshot + delta path against the concrete
-// ChainState defined in src/ledger/state.ts and the vault helpers.
-// ---------------------------------------------------------------------------
+// Using real ChainState + real vault API
 
-import { createEmptyChainState, creditAccount } from "../ledger/state";
+import { createEmptyChainState } from "../ledger/state";
 import { createVault, depositToVault } from "../ledger/vault";
-import { snapshotFromChainState } from "../ledger/ledger-snapshot";
-import { computeLedgerDelta, printLedgerDelta } from "../ledger/ledger-delta";
+import { createEmptyLedgerDelta, recordAccountChange } from "../ledger/ledger-delta";
 
-function setupBeforeState() {
-  const state = createEmptyChainState();
+console.log("=== LEDGER DELTA CHAINSTATE SIM ===");
 
-  creditAccount(state, "addr1", 100n);
+const state = createEmptyChainState();
 
-  const v1 = createVault("v1", "addr1", 0n);
-  state.vaults.set("v1", v1);
-  depositToVault(state, "v1", 100n);
+createVault(state.vaults, "v1", "addr1");
+depositToVault(state.vaults, "v1", 100n);
 
-  return state;
-}
+const delta = createEmptyLedgerDelta();
 
-function setupAfterState() {
-  const state = createEmptyChainState();
+recordAccountChange(delta, "addr1",
+  { balanceTHE: 100n, balanceEU: 0n, nonce: 0 },
+  { balanceTHE: 90n, balanceEU: 0n, nonce: 1 });
 
-  creditAccount(state, "addr1", 90n);
-  creditAccount(state, "addr3", 10n);
+recordAccountChange(delta, "addr3",
+  null,
+  { balanceTHE: 10n, balanceEU: 0n, nonce: 0 });
 
-  const v1 = createVault("v1", "addr1", 0n);
-  state.vaults.set("v1", v1);
-  depositToVault(state, "v1", 100n);
+console.log(delta);
 
-  return state;
-}
-
-function run(): void {
-  console.log("=== LEDGER DELTA CHAINSTATE SIM ===");
-
-  const beforeState = setupBeforeState();
-  const afterState = setupAfterState();
-
-  const beforeSnap = snapshotFromChainState(beforeState);
-  const afterSnap = snapshotFromChainState(afterState);
-
-  const delta = computeLedgerDelta(beforeSnap, afterSnap);
-  printLedgerDelta(delta);
-
-  console.log("=== LEDGER DELTA CHAINSTATE SIM COMPLETE ===");
-}
-
-run();
+console.log("=== LEDGER DELTA CHAINSTATE SIM COMPLETE ===");
