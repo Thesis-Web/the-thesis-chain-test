@@ -1,49 +1,132 @@
 // TARGET: chain src/consensus/apply-block.ts
 // src/consensus/apply-block.ts
 // ---------------------------------------------------------------------------
-// Pack 42.1 — Full applyBlock pipeline (minimal, safe version)
+// Pack 42.1 + 46.1 — applyBlock with FullLedgerStateV1 + FullLedgerDeltaV1
+// ---------------------------------------------------------------------------
 //
-// This version intentionally keeps applyBlock **pure and conservative**:
-//   • It does NOT yet invoke the Tx VM.
-//   • It does NOT yet compute or apply per-module deltas.
-//   • It ONLY updates chain height + lastBlockHash in a new FullLedgerStateV1.
+// This version of applyBlock is the final “bridge” between:
+//   • FullLedgerStateV1   — aggregated L1 economic state (chain + EU registry)
+//   • FullLedgerDeltaV1   — composed delta view (ledger + vaults + EU + splits)
 //
-// The goal of Pack 42.1 is to make the wiring compile cleanly and give us a
-// stable surface to extend in Packs 43–46 (multi-block sims, replay harness,
-// difficulty + SplitEngine integration, full Tx VM hookup, etc.).
+// For now, it keeps semantics deliberately minimal:
+//   • No real tx execution yet (tx VM wiring is reserved for later packs).
+//   • No actual ledger or EU mutations are applied.
+//   • It focuses on correct *shape* and invariant-friendly wiring so that
+//     higher-level sims (multiblock, replay harness, difficulty-safe, etc.)
+//     can exercise the full stack safely.
+//
+// Later packs can extend the “tx execution” and “delta synthesis” blocks
+// without changing the public signature of applyBlock.
 // ---------------------------------------------------------------------------
 
 import type { FullLedgerStateV1 } from "../fullstate/state";
+import type { FullLedgerDeltaV1 } from "../fullstate/delta";
+
+import type { LedgerDelta } from "../ledger/ledger-delta";
+import type { VaultDelta } from "../ledger/vault-delta";
+import type { EuRegistryDelta } from "../ledger/eu-registry-delta";
+
 import type { Block } from "./types";
 
+export interface ApplyBlockResult {
+  readonly next: FullLedgerStateV1;
+  readonly delta: FullLedgerDeltaV1;
+}
+
 // ---------------------------------------------------------------------------
-// applyBlock (pure, structural)
+// applyBlock
 // ---------------------------------------------------------------------------
 //
-// For now, applyBlock simply:
-//   • takes the previous FullLedgerStateV1,
-//   • returns a new FullLedgerStateV1 with updated height + lastBlockHash,
-//   • leaves all maps (accounts, vaults, EU registry) untouched.
+// Input:
+//   • state — previous full ledger state (chain + EU registry).
+//   • block — consensus Block header + tx list.
 //
-// Later packs will:
-//   • thread Tx execution through the VM,
-//   • produce Ledger / Vault / EU deltas,
-//   • apply those deltas to derive the next state,
-//   • attach emissions, fees, and SplitEngine results.
+// Output:
+//   • next  — the next full ledger state after applying the block.
+//   • delta — a composed FullLedgerDeltaV1 for inspection / logging.
+//
+// In this minimal implementation we only advance the chain height/hash and
+// keep economic state neutral (no account / vault / EU changes yet).
 // ---------------------------------------------------------------------------
 
 export function applyBlock(
-  prev: FullLedgerStateV1,
+  state: FullLedgerStateV1,
   block: Block
-): FullLedgerStateV1 {
-  const nextChain = {
-    ...prev.chain,
-    height: block.height,
-    lastBlockHash: block.hash
+): ApplyBlockResult {
+  // -------------------------------------------------------------------------
+  // 1) Basic structural / monotonic sanity (non-throwing for now)
+  // -------------------------------------------------------------------------
+  const expectedHeight = state.chain.height + 1;
+  if (block.height !== expectedHeight) {
+    // We *could* throw here, but for now we keep the pipeline lenient so
+    // sims can experiment freely. Invariant checks are handled in sims.
+    // console.warn(
+    //   `applyBlock: non-sequential height (prev=${state.chain.height}, block.height=${block.height})`
+    // );
+  }
+
+  if (block.height > 1 && !block.parentHash) {
+    // Again, we log-worthy but non-fatal in this minimal version.
+    // console.warn("applyBlock: missing parentHash for non-genesis block");
+  }
+
+  // -------------------------------------------------------------------------
+  // 2) Construct next FullLedgerStateV1
+  // -------------------------------------------------------------------------
+  //
+  // We clone Maps to keep sims / tooling safe from accidental aliasing.
+  // No balances or EU registry entries are changed yet.
+  // -------------------------------------------------------------------------
+
+  const next: FullLedgerStateV1 = {
+    chain: {
+      height: block.height,
+      lastBlockHash: block.hash,
+      accounts: new Map(state.chain.accounts),
+      vaults: new Map(state.chain.vaults)
+    },
+    euRegistry: {
+      byId: new Map(state.euRegistry.byId),
+      byOwner: new Map(state.euRegistry.byOwner)
+    }
   };
 
-  return {
-    chain: nextChain,
-    euRegistry: prev.euRegistry
+  // -------------------------------------------------------------------------
+  // 3) Synthesize a neutral FullLedgerDeltaV1
+  // -------------------------------------------------------------------------
+  //
+  // Once tx VM + ledger mutations are wired, this section will:
+  //   • run txs,
+  //   • capture before/after snapshots,
+  //   • compute LedgerDelta / VaultDelta / EuRegistryDelta,
+  //   • thread in SplitEngine summaries.
+  //
+  // For now we emit empty deltas plus a null splitEvent. This is enough for:
+  //   • multiblock-sim (Pack 43/44),
+  //   • replay-harness-sim (Pack 46),
+  //   • difficulty-safe sims that only care about heights + hashes.
+  // -------------------------------------------------------------------------
+
+  const emptyLedgerDelta: LedgerDelta = {
+    accounts: new Map(),
+    vaults: new Map(),
+    euCerts: new Map()
   };
+
+  const emptyVaultDelta: VaultDelta = {
+    vaults: new Map()
+  };
+
+  const emptyEuDelta: EuRegistryDelta = {
+    certs: new Map()
+  };
+
+  const fullDelta: FullLedgerDeltaV1 = {
+    ledger: emptyLedgerDelta,
+    vaults: emptyVaultDelta,
+    eu: emptyEuDelta,
+    splitEvent: null
+  };
+
+  return { next, delta: fullDelta };
 }
