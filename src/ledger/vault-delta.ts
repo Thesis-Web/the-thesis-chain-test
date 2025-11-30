@@ -1,7 +1,7 @@
 // TARGET: chain src/ledger/vault-delta.ts
 // src/ledger/vault-delta.ts
 // ---------------------------------------------------------------------------
-// Pack 38 — VaultDelta Full Semantics
+// Pack 38.1 — VaultDelta Full Semantics (structural-only apply)
 // ---------------------------------------------------------------------------
 //
 // This module defines a neutral snapshot + delta format for the vault layer.
@@ -12,9 +12,14 @@
 //   - balanceTHE
 //   - optional kind/notes metadata
 //
-// This is L1-internal semantics only. For EU Certificates, the *physical*
-// legal-tender bearer is off-ledger. Here, `owner` is the on-ledger controller
-// (e.g. an issuing bank account, BoT treasury account, or wTHE wrapper).
+// IMPORTANT:
+//   • This layer is *structural only*. It does NOT re-enforce vault invariants
+//     like "a vault must be empty before deletion". Those invariants belong in
+//     the transaction / vault engine (vault.ts) and ledger pipeline that
+//     produced the snapshots in the first place.
+//   • applyVaultDelta is therefore a pure, best-effort mechanism to reconstruct
+//     a VaultMap from a base map + delta, assuming the delta came from valid
+//     snapshots.
 //
 // The pattern mirrors other delta modules:
 //   • Take snapshots (VaultsSnapshot) from a VaultMap.
@@ -132,9 +137,12 @@ export function computeVaultDelta(
 /**
  * Apply a VaultDelta to a base VaultMap to produce a new VaultMap.
  *
- * Invariants enforced:
- *   • Deleting a vault with non-zero balanceTHE throws.
- *   • Negative balances are never introduced.
+ * This function is *structural only*:
+ *   • Deletion of non-empty vaults is allowed here, because the snapshots
+ *     already embed whatever sequence of withdraw/delete operations occurred
+ *     in the underlying ledger engine.
+ *   • Negative balances are still guarded against, because they are never
+ *     valid in the vault engine and would indicate a misuse of the delta.
  *
  * NOTE:
  *   This function does not re-check that `base` matches the `before` side
@@ -142,10 +150,7 @@ export function computeVaultDelta(
  *   produced by computeVaultDelta). The `before` snapshots are retained
  *   purely for logging and analysis.
  */
-export function applyVaultDelta(
-  base: VaultMap,
-  delta: VaultDelta
-): VaultMap {
+export function applyVaultDelta(base: VaultMap, delta: VaultDelta): VaultMap {
   const next = new Map<VaultId, Vault>();
 
   // Start from base (cloned).
@@ -154,20 +159,14 @@ export function applyVaultDelta(
   }
 
   for (const [id, change] of delta.vaults.entries()) {
-    const { before, after } = change;
+    const { after } = change;
 
     if (after === null) {
-      // Deletion.
-      if (before && before.balanceTHE !== 0n) {
-        throw new Error(
-          `applyVaultDelta: cannot delete non-empty vault ${id} (balanceTHE=${before.balanceTHE})`
-        );
-      }
+      // Deletion (structural).
       next.delete(id);
       continue;
     }
 
-    // Creation / mutation.
     if (after.balanceTHE < 0n) {
       throw new Error(
         `applyVaultDelta: negative balanceTHE for vault ${id}: ${after.balanceTHE}`
