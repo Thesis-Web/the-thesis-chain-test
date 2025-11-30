@@ -1,12 +1,14 @@
 // TARGET: chain src/sims/multiblock-sim.ts
 // src/sims/multiblock-sim.ts
 // ---------------------------------------------------------------------------
-// Pack 43 — Multi-block ChainSim (scaffolding)
+// Pack 43 + 44 — Multi-block ChainSim (delta-aware + SplitEngine hook surface)
 //
 // This sim runs a tiny in-memory chain using the current minimal applyBlock
-// wiring. It does **not** execute real transactions yet; instead it focuses on
-// sequencing blocks and demonstrating how FullLedgerDeltaV1 will fit into the
-// loop once deltas are fully wired in later packs.
+// wiring. It focuses on sequencing blocks and demonstrating how
+// FullLedgerDeltaV1 (including the SplitEngine summary) fits into the loop.
+//
+// For now, the deltas are still empty and splitEvent is null; later packs will
+// thread real VM / ledger / vault / EU / split transitions through here.
 // ---------------------------------------------------------------------------
 
 import { createEmptyFullLedgerStateV1 } from "../fullstate/state";
@@ -20,7 +22,7 @@ import type { EuRegistryDelta } from "../ledger/eu-registry-delta";
 import type { FullLedgerDeltaV1 } from "../fullstate/delta";
 import { printFullLedgerDeltaV1 } from "../fullstate/delta";
 
-console.log("=== MULTIBLOCK SIM (Pack 43) ===");
+console.log("=== MULTIBLOCK SIM (Pack 43/44) ===");
 
 const initial = createEmptyFullLedgerStateV1();
 let state = initial;
@@ -40,7 +42,7 @@ for (let h = 1; h <= numBlocks; h++) {
 
   // For now we construct empty deltas just to validate the composed
   // FullLedgerDeltaV1 type + logging surface. Later packs will populate
-  // these from real VM / ledger / vault / EU transitions.
+  // these from real VM / ledger / vault / EU / split transitions.
   const emptyLedgerDelta: LedgerDelta = {
     accounts: new Map(),
     vaults: new Map(),
@@ -58,7 +60,8 @@ for (let h = 1; h <= numBlocks; h++) {
   const fullDelta: FullLedgerDeltaV1 = {
     ledger: emptyLedgerDelta,
     vaults: emptyVaultDelta,
-    eu: emptyEuDelta
+    eu: emptyEuDelta,
+    splitEvent: null
   };
 
   console.log(`--- Block h=${h} hash=${block.hash} ---`);
