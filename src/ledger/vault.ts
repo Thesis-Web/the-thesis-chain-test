@@ -19,6 +19,7 @@
 // ---------------------------------------------------------------------------
 
 import type { Address, Amount } from "../types/primitives";
+import { DEFAULT_ATOMIC_COIN_POLICY, assertAtomicAmount } from "./atomic-coin";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -125,6 +126,7 @@ export function depositToVault(
   amount: Amount
 ): Vault {
   assertAmountPositive("depositToVault", amount);
+  assertAtomicAmount(DEFAULT_ATOMIC_COIN_POLICY, amount);
 
   const v = getVault(vaults, id);
   v.balanceTHE += amount;
@@ -145,6 +147,7 @@ export function withdrawFromVault(
   amount: Amount
 ): Vault {
   assertAmountPositive("withdrawFromVault", amount);
+  assertAtomicAmount(DEFAULT_ATOMIC_COIN_POLICY, amount);
 
   const v = getVault(vaults, id);
 
