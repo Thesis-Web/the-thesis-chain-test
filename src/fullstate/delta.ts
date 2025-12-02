@@ -21,6 +21,7 @@
 import type { LedgerDelta } from "../ledger/ledger-delta";
 import type { VaultDelta } from "../ledger/vault-delta";
 import type { EuRegistryDelta } from "../ledger/eu-registry-delta";
+import type { BackWallEventSummary } from "../ledger/back-wall";
 
 // ---------------------------------------------------------------------------
 // Split engine summary
@@ -48,6 +49,12 @@ export interface FullLedgerDeltaV1 {
   readonly vaults: VaultDelta;
   readonly eu: EuRegistryDelta;
   readonly splitEvent?: SplitEventSummary | null;
+
+  /**
+   * Optional back-wall inspection summary for this block.
+   * Present when consensus has run the Back-Wall check for the block.
+   */
+  readonly backWallEvent?: BackWallEventSummary | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -73,5 +80,16 @@ export function printFullLedgerDeltaV1(delta: FullLedgerDeltaV1): void {
     );
   } else {
     console.log("  splitEvent: none");
+  }
+
+  if (delta.backWallEvent) {
+    const b = delta.backWallEvent;
+    console.log(
+      `  backWallEvent: height=${b.height}, kind=${b.kind}, ` +
+        `totalThe=${b.totalThe}, totalAccountThe=${b.totalAccountThe}, ` +
+        `totalVaultThe=${b.totalVaultThe}`
+    );
+  } else {
+    console.log("  backWallEvent: none");
   }
 }

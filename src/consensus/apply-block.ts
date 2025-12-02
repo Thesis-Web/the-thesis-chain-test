@@ -27,6 +27,8 @@ import type { VaultDelta } from "../ledger/vault-delta";
 import type { EuRegistryDelta } from "../ledger/eu-registry-delta";
 
 import type { Block } from "./types";
+import type { BackWallEventSummary } from "../ledger/back-wall";
+import { checkBackWall, DEFAULT_BACK_WALL_GUARDS } from "../ledger/back-wall";
 
 export interface ApplyBlockResult {
   readonly next: FullLedgerStateV1;
@@ -121,11 +123,17 @@ export function applyBlock(
     certs: new Map()
   };
 
+  const backWallEvent: BackWallEventSummary = checkBackWall(
+    next.chain,
+    DEFAULT_BACK_WALL_GUARDS
+  );
+
   const fullDelta: FullLedgerDeltaV1 = {
     ledger: emptyLedgerDelta,
     vaults: emptyVaultDelta,
     eu: emptyEuDelta,
-    splitEvent: null
+    splitEvent: null,
+    backWallEvent
   };
 
   return { next, delta: fullDelta };
