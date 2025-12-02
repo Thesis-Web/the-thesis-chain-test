@@ -1,44 +1,55 @@
 // TARGET: chain src/sims/multiblock-sim.ts
 // src/sims/multiblock-sim.ts
 // ---------------------------------------------------------------------------
-// Pack 48B — multiblock-sim fix
+// Pack 43 + 48C — Multi-block ChainSim (delta-aware + BackWall hook surface)
+// ---------------------------------------------------------------------------
+//
+// This sim runs a tiny in-memory chain using the current applyBlock wiring.
+// It focuses on sequencing blocks and demonstrating how FullLedgerDeltaV1
+// (including SplitEngine + BackWall summaries) fits into the loop.
+//
+// NOTE:
+//   • We now use the real delta returned from applyBlock instead of
+//     constructing a fake empty delta.
+//   • We destructure ApplyBlockResult into { next, delta } so that `next`
+//     is a proper FullLedgerStateV1 and TypeScript can see `next.chain`.
 // ---------------------------------------------------------------------------
 
+import { createEmptyFullLedgerStateV1 } from "../fullstate/state";
 import { applyBlock } from "../consensus/apply-block";
-import { makeGenesisFullLedgerStateV1 } from "../fullstate/state";
-import type { FullLedgerStateV1 } from "../fullstate/state";
 import type { Block } from "../consensus/types";
 
-export function runMultiBlockSim(): void {
-  console.log("=== MULTIBLOCK SIM (Pack 48B) ===");
+import type { FullLedgerDeltaV1 } from "../fullstate/delta";
+import { printFullLedgerDeltaV1 } from "../fullstate/delta";
 
-  let state: FullLedgerStateV1 = makeGenesisFullLedgerStateV1();
+console.log("=== MULTIBLOCK SIM (Pack 43/48C) ===");
 
-  const blocks: Block[] = [];
-  for (let i = 1; i <= 10; i++) {
-    blocks.push({
-      height: i,
-      parentHash: i === 1 ? "genesis" : `block-${i - 1}`,
-      timestamp: state.chain.timestamp + 240,
-      hash: `block-${i}`,
-      txs: []
-    });
-  }
+const initial = createEmptyFullLedgerStateV1();
+let state = initial;
 
-  for (const block of blocks) {
-    const prev: FullLedgerStateV1 = state;
+const numBlocks = 5;
 
-    const result = applyBlock(prev, block);
-    const next: FullLedgerStateV1 = result.next;
+for (let h = 1; h <= numBlocks; h++) {
+  const block: Block = {
+    height: h,
+    hash: `block-${h}`,
+    parentHash: h === 1 ? undefined : `block-${h - 1}`,
+    txs: []
+  };
 
-    console.log(
-      `  Block h=${block.height} | prev.height=${prev.chain.height} -> next.height=${next.chain.height}`
-    );
+  const prev = state;
 
-    state = next;
-  }
+  const { next, delta }: { next: typeof state; delta: FullLedgerDeltaV1 } =
+    applyBlock(prev, block);
 
-  console.log("=== MULTIBLOCK SIM COMPLETE (48B) ===");
+  console.log(`--- Block h=${h} hash=${block.hash} ---`);
+  console.log(
+    `  prev.height=${prev.chain.height} -> next.height=${next.chain.height}`
+  );
+  printFullLedgerDeltaV1(delta);
+
+  state = next;
 }
 
-runMultiBlockSim();
+console.log("Final height =", state.chain.height);
+console.log("=== MULTIBLOCK SIM COMPLETE ===");
