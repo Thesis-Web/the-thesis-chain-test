@@ -1,12 +1,12 @@
 // TARGET: chain src/ledger/atomic-eu-ledger-debug.ts
 // src/ledger/atomic-eu-ledger-debug.ts
 // ---------------------------------------------------------------------------
-// Pack 53C — EU Atomic Ledger Debug Helpers (non-invasive)
+// Pack 53D — EU Atomic Ledger Debug Helpers (non-invasive)
 // ---------------------------------------------------------------------------
 //
 // Purpose:
-//   • Provide *read-only* helpers to inspect a FullLedgerStateV1 / ChainState
-//     and derive an "EU ledger snapshot" suitable for atomic invariant checks.
+//   • Provide *read-only* helpers to inspect a ChainState and EuRegistry and
+//     derive a LedgerEuSnapshot suitable for atomic invariant checks.
 //   • Bridge from the existing EU registry (src/ledger/eu.ts) into the
 //     atomic EU enforcement helpers from Pack 52.
 //   • Stay completely out of the hot consensus path for now. These utilities
@@ -18,14 +18,16 @@
 //   • run automatically from applyLedgerWithRewards.
 //
 // Wiring this into consensus (if/when we decide that is appropriate per the
-// blueprint) will be done in a later pack, once the policy is finalized.
+// blueprint) will be done in a later pack, once the policy is finalised.
 // ---------------------------------------------------------------------------
 
 import type { ChainState } from "./state";
 import type { EuRegistry } from "./eu";
+import type { AtomicCoinPolicy } from "./atomic-coin";
 import {
   assertLedgerEuSnapshotAtomic,
-  type LedgerEuSnapshot
+  type LedgerEuSnapshot,
+  type EuCertSnapshot
 } from "./atomic-eu-ledger-enforce";
 
 // ---------------------------------------------------------------------------
@@ -48,8 +50,8 @@ export function buildEuLedgerSnapshotFromRegistry(
   state: ChainState,
   registry: EuRegistry
 ): LedgerEuSnapshot {
-  const certs: Record<string, bigint> = {};
-  let totalEu = 0n;
+  const certs: EuCertSnapshot[] = [];
+  let totalEuSupply = 0n;
 
   for (const [id, cert] of registry.byId.entries()) {
     // We currently treat all statuses the same for atomicity purposes; the
@@ -66,13 +68,17 @@ export function buildEuLedgerSnapshotFromRegistry(
       continue;
     }
 
-    certs[id] = valueEU;
-    totalEu += valueEU;
+    const snapshotCert: EuCertSnapshot = {
+      certId: id,
+      value: valueEU
+    };
+    certs.push(snapshotCert);
+    totalEuSupply += valueEU;
   }
 
   const snapshot: LedgerEuSnapshot = {
-    certs,
-    totalEu
+    totalEuSupply,
+    certs
   };
 
   return snapshot;
@@ -84,23 +90,18 @@ export function buildEuLedgerSnapshotFromRegistry(
 
 /**
  * Run atomic EU checks against the current ChainState + EuRegistry under a
- * given policy. This is a *debug* helper only.
+ * given AtomicCoinPolicy. This is a *debug* helper only.
  *
  * It will either:
  *   • return normally (no violations), or
  *   • throw LedgerEuAtomicInvariantError (from Pack 52) if any violation
  *     is found.
- *
- * NOTE: The `policy` shape is intentionally structural here to avoid tight
- * coupling to the exact EuAtomicPolicy type alias. It is expected to match
- * the `{ atomicUnit: bigint; maxSupply?: bigint }` contract from
- * atomic-eu-ledger-enforce.ts.
  */
 export function assertEuLedgerAtomicFromState(
   state: ChainState,
   registry: EuRegistry,
-  policy: { atomicUnit: bigint; maxSupply?: bigint }
+  policy: AtomicCoinPolicy
 ): void {
   const snapshot = buildEuLedgerSnapshotFromRegistry(state, registry);
-  assertLedgerEuSnapshotAtomic(snapshot, policy as any);
+  assertLedgerEuSnapshotAtomic(policy, snapshot);
 }
