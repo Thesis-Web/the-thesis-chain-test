@@ -1,7 +1,7 @@
 // TARGET: chain src/ledger/atomic-eu-ledger-debug.ts
 // src/ledger/atomic-eu-ledger-debug.ts
 // ---------------------------------------------------------------------------
-// Pack 53 — EU Atomic Ledger Debug Helpers (non-invasive)
+// Pack 53B — EU Atomic Ledger Debug Helpers (non-invasive)
 // ---------------------------------------------------------------------------
 //
 // Purpose:
@@ -22,10 +22,9 @@
 // ---------------------------------------------------------------------------
 
 import type { ChainState } from "./state";
-import type { EuRegistry, EuCertificateId } from "./eu";
+import type { EuRegistry } from "./eu";
 import {
   assertLedgerEuSnapshotAtomic,
-  type EuAtomicPolicy,
   type EuLedgerSnapshot
 } from "./atomic-eu-ledger-enforce";
 
@@ -38,7 +37,7 @@ import {
  *
  * Notes / assumptions (per 030-ledger-architecture + 070/085 docs):
  *   • EU is a *claim* on vault THE, not a separate asset in the core ledger.
-//   • For now we only care about the EU "face value" as recorded on each
+ *   • For now we only care about the EU "face value" as recorded on each
  *     certificate, expressed in raw EU units (bigint).
  *
  * The exact semantics of oracleValueEUAtIssuance vs. current EU index are
@@ -54,12 +53,12 @@ export function buildEuLedgerSnapshotFromRegistry(
 
   for (const [id, cert] of registry.byId.entries()) {
     // We currently treat all statuses the same for atomicity purposes; the
-    // policy can decide later whether to ignore non‑ACTIVE certs.
+    // policy can decide later whether to ignore non-ACTIVE certs.
     const valueEU = cert.oracleValueEUAtIssuance;
 
     // Basic sanity: ensure the backing vault exists. This mirrors the
-    // invariant checks in src/ledger/eu.ts but stays read‑only.
-    const vault = state.vaults.get(cert.backingVaultId);
+    // invariant checks in src/ledger/eu.ts but stays read-only.
+    const vault = state.vaults.get(cert.backingVaultId as any);
     if (!vault) {
       // We *do not* throw here; the atomic helpers are meant to be
       // introspective. Structural invariants (like missing vaults) are
@@ -85,18 +84,23 @@ export function buildEuLedgerSnapshotFromRegistry(
 
 /**
  * Run atomic EU checks against the current ChainState + EuRegistry under a
- * given EuAtomicPolicy. This is a *debug* helper only.
+ * given policy. This is a *debug* helper only.
  *
  * It will either:
  *   • return normally (no violations), or
  *   • throw LedgerEuAtomicInvariantError (from Pack 52) if any violation
  *     is found.
+ *
+ * NOTE: The `policy` shape is intentionally structural here to avoid tight
+ * coupling to the exact EuAtomicPolicy type alias. It is expected to match
+ * the `{ atomicUnit: bigint; maxSupply?: bigint }` contract from
+ * atomic-eu-ledger-enforce.ts.
  */
 export function assertEuLedgerAtomicFromState(
   state: ChainState,
   registry: EuRegistry,
-  policy: EuAtomicPolicy
+  policy: { atomicUnit: bigint; maxSupply?: bigint }
 ): void {
   const snapshot = buildEuLedgerSnapshotFromRegistry(state, registry);
-  assertLedgerEuSnapshotAtomic(snapshot, policy);
+  assertLedgerEuSnapshotAtomic(snapshot, policy as any);
 }
