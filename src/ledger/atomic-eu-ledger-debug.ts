@@ -1,7 +1,7 @@
 // TARGET: chain src/ledger/atomic-eu-ledger-debug.ts
 // src/ledger/atomic-eu-ledger-debug.ts
 // ---------------------------------------------------------------------------
-// Pack 53B — EU Atomic Ledger Debug Helpers (non-invasive)
+// Pack 53C — EU Atomic Ledger Debug Helpers (non-invasive)
 // ---------------------------------------------------------------------------
 //
 // Purpose:
@@ -25,7 +25,7 @@ import type { ChainState } from "./state";
 import type { EuRegistry } from "./eu";
 import {
   assertLedgerEuSnapshotAtomic,
-  type EuLedgerSnapshot
+  type LedgerEuSnapshot
 } from "./atomic-eu-ledger-enforce";
 
 // ---------------------------------------------------------------------------
@@ -33,7 +33,7 @@ import {
 // ---------------------------------------------------------------------------
 
 /**
- * Build a EuLedgerSnapshot from the current ChainState + EuRegistry.
+ * Build a LedgerEuSnapshot from the current ChainState + EuRegistry.
  *
  * Notes / assumptions (per 030-ledger-architecture + 070/085 docs):
  *   • EU is a *claim* on vault THE, not a separate asset in the core ledger.
@@ -47,7 +47,7 @@ import {
 export function buildEuLedgerSnapshotFromRegistry(
   state: ChainState,
   registry: EuRegistry
-): EuLedgerSnapshot {
+): LedgerEuSnapshot {
   const certs: Record<string, bigint> = {};
   let totalEu = 0n;
 
@@ -70,7 +70,7 @@ export function buildEuLedgerSnapshotFromRegistry(
     totalEu += valueEU;
   }
 
-  const snapshot: EuLedgerSnapshot = {
+  const snapshot: LedgerEuSnapshot = {
     certs,
     totalEu
   };

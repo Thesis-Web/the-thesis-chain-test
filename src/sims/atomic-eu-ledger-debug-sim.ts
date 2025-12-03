@@ -1,7 +1,7 @@
 // TARGET: chain src/sims/atomic-eu-ledger-debug-sim.ts
 // src/sims/atomic-eu-ledger-debug-sim.ts
 // ---------------------------------------------------------------------------
-// Pack 53B — EU Atomic Ledger Debug Sim
+// Pack 53C — EU Atomic Ledger Debug Sim
 // ---------------------------------------------------------------------------
 //
 // This sim is a *wrapper harness* around the Pack 52 helpers plus the new
