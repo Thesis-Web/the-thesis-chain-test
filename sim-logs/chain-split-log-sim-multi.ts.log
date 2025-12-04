@@ -1,0 +1,31 @@
+=== CHAIN SPLIT LOG SIM (MULTI) ===
+h= 1 price= null shouldSplit= false cumulativeFactor= 1 reason= no_price prevHeight= 0 nextHeight= 1
+h= 2 price= null shouldSplit= false cumulativeFactor= 1 reason= no_price prevHeight= 1 nextHeight= 2
+h= 3 price= null shouldSplit= false cumulativeFactor= 1 reason= no_price prevHeight= 2 nextHeight= 3
+h= 4 price= null shouldSplit= false cumulativeFactor= 1 reason= no_price prevHeight= 3 nextHeight= 4
+h= 5 price= 3.5 shouldSplit= true cumulativeFactor= 2 reason= threshold_met prevHeight= 4 nextHeight= 5
+h= 6 price= null shouldSplit= false cumulativeFactor= 2 reason= no_price prevHeight= 5 nextHeight= 6
+h= 7 price= null shouldSplit= false cumulativeFactor= 2 reason= no_price prevHeight= 6 nextHeight= 7
+h= 8 price= null shouldSplit= false cumulativeFactor= 2 reason= no_price prevHeight= 7 nextHeight= 8
+h= 9 price= null shouldSplit= false cumulativeFactor= 2 reason= no_price prevHeight= 8 nextHeight= 9
+h= 10 price= 8 shouldSplit= false cumulativeFactor= 2 reason= min_interval_not_met prevHeight= 9 nextHeight= 10
+h= 11 price= null shouldSplit= false cumulativeFactor= 2 reason= no_price prevHeight= 10 nextHeight= 11
+h= 12 price= null shouldSplit= false cumulativeFactor= 2 reason= no_price prevHeight= 11 nextHeight= 12
+h= 13 price= null shouldSplit= false cumulativeFactor= 2 reason= no_price prevHeight= 12 nextHeight= 13
+h= 14 price= null shouldSplit= false cumulativeFactor= 2 reason= no_price prevHeight= 13 nextHeight= 14
+h= 15 price= 16 shouldSplit= false cumulativeFactor= 2 reason= min_interval_not_met prevHeight= 14 nextHeight= 15
+h= 16 price= null shouldSplit= false cumulativeFactor= 2 reason= no_price prevHeight= 15 nextHeight= 16
+h= 17 price= null shouldSplit= false cumulativeFactor= 2 reason= no_price prevHeight= 16 nextHeight= 17
+h= 18 price= null shouldSplit= false cumulativeFactor= 2 reason= no_price prevHeight= 17 nextHeight= 18
+h= 19 price= null shouldSplit= false cumulativeFactor= 2 reason= no_price prevHeight= 18 nextHeight= 19
+h= 20 price= null shouldSplit= false cumulativeFactor= 2 reason= no_price prevHeight= 19 nextHeight= 20
+=== splitEvents recorded on state ===
+[
+  {
+    height: 5,
+    factor: 2n,
+    cumulativeFactor: 2n,
+    euPerThePrice: 3.5,
+    reason: 'threshold_met'
+  }
+]

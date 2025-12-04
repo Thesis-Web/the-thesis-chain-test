@@ -1,0 +1,33 @@
+=== ATOMIC COIN SIM (Pack 49) ===
+---
+raw=0
+  q=0, r=0
+  validateAtomicAmount: OK
+  assertAtomicAmount: OK
+---
+raw=1
+  q=1, r=0
+  validateAtomicAmount: OK
+  assertAtomicAmount: OK
+---
+raw=2
+  q=2, r=0
+  validateAtomicAmount: OK
+  assertAtomicAmount: OK
+---
+raw=10
+  q=10, r=0
+  validateAtomicAmount: OK
+  assertAtomicAmount: OK
+---
+raw=-1
+  q=-1, r=0
+  validateAtomicAmount: {
+  kind: 'NEGATIVE',
+  message: 'Atomic amount must not be negative',
+  value: -1n,
+  atomicUnit: 1n,
+  maxSupply: undefined
+}
+  assertAtomicAmount: ERROR -> [AtomicCoinError:NEGATIVE] Atomic amount must not be negative (value=-1, atomicUnit=1)
+=== ATOMIC COIN SIM COMPLETE ===

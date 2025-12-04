@@ -1,0 +1,43 @@
+=== MULTIBLOCK SIM (Pack 43/48C) ===
+--- Block h=1 hash=block-1 ---
+  prev.height=0 -> next.height=1
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=1, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+--- Block h=2 hash=block-2 ---
+  prev.height=1 -> next.height=2
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=2, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+--- Block h=3 hash=block-3 ---
+  prev.height=2 -> next.height=3
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=3, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+--- Block h=4 hash=block-4 ---
+  prev.height=3 -> next.height=4
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=4, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+--- Block h=5 hash=block-5 ---
+  prev.height=4 -> next.height=5
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=5, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+Final height = 5
+=== MULTIBLOCK SIM COMPLETE ===

@@ -1,0 +1,668 @@
+=== FULL L1 REPLAY HARNESS (Pack 46) ===
+--- Block h=1 hash=block-1 ---
+  prev.height=0 -> next.height=1
+  difficulty: 1000000 -> 1000000 (reason=safe_mode, dt=null)
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=1, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+--- Block h=2 hash=block-2 ---
+  prev.height=1 -> next.height=2
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=3 hash=block-3 ---
+  prev.height=2 -> next.height=3
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=4 hash=block-4 ---
+  prev.height=3 -> next.height=4
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=5 hash=block-5 ---
+  prev.height=4 -> next.height=5
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=6 hash=block-6 ---
+  prev.height=5 -> next.height=6
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=7 hash=block-7 ---
+  prev.height=6 -> next.height=7
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=8 hash=block-8 ---
+  prev.height=7 -> next.height=8
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=9 hash=block-9 ---
+  prev.height=8 -> next.height=9
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=10 hash=block-10 ---
+  prev.height=9 -> next.height=10
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=11 hash=block-11 ---
+  prev.height=10 -> next.height=11
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=12 hash=block-12 ---
+  prev.height=11 -> next.height=12
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=13 hash=block-13 ---
+  prev.height=12 -> next.height=13
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=14 hash=block-14 ---
+  prev.height=13 -> next.height=14
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=15 hash=block-15 ---
+  prev.height=14 -> next.height=15
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=16 hash=block-16 ---
+  prev.height=15 -> next.height=16
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=17 hash=block-17 ---
+  prev.height=16 -> next.height=17
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=18 hash=block-18 ---
+  prev.height=17 -> next.height=18
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=19 hash=block-19 ---
+  prev.height=18 -> next.height=19
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=20 hash=block-20 ---
+  prev.height=19 -> next.height=20
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=21 hash=block-21 ---
+  prev.height=20 -> next.height=21
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=22 hash=block-22 ---
+  prev.height=21 -> next.height=22
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=23 hash=block-23 ---
+  prev.height=22 -> next.height=23
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=24 hash=block-24 ---
+  prev.height=23 -> next.height=24
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=25 hash=block-25 ---
+  prev.height=24 -> next.height=25
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=25, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+--- Block h=26 hash=block-26 ---
+  prev.height=25 -> next.height=26
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=27 hash=block-27 ---
+  prev.height=26 -> next.height=27
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=28 hash=block-28 ---
+  prev.height=27 -> next.height=28
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=29 hash=block-29 ---
+  prev.height=28 -> next.height=29
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=30 hash=block-30 ---
+  prev.height=29 -> next.height=30
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=31 hash=block-31 ---
+  prev.height=30 -> next.height=31
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=32 hash=block-32 ---
+  prev.height=31 -> next.height=32
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=33 hash=block-33 ---
+  prev.height=32 -> next.height=33
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=34 hash=block-34 ---
+  prev.height=33 -> next.height=34
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=35 hash=block-35 ---
+  prev.height=34 -> next.height=35
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=36 hash=block-36 ---
+  prev.height=35 -> next.height=36
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=37 hash=block-37 ---
+  prev.height=36 -> next.height=37
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=38 hash=block-38 ---
+  prev.height=37 -> next.height=38
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=39 hash=block-39 ---
+  prev.height=38 -> next.height=39
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=40 hash=block-40 ---
+  prev.height=39 -> next.height=40
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=41 hash=block-41 ---
+  prev.height=40 -> next.height=41
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=42 hash=block-42 ---
+  prev.height=41 -> next.height=42
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=43 hash=block-43 ---
+  prev.height=42 -> next.height=43
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=44 hash=block-44 ---
+  prev.height=43 -> next.height=44
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=45 hash=block-45 ---
+  prev.height=44 -> next.height=45
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=46 hash=block-46 ---
+  prev.height=45 -> next.height=46
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=47 hash=block-47 ---
+  prev.height=46 -> next.height=47
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=48 hash=block-48 ---
+  prev.height=47 -> next.height=48
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=49 hash=block-49 ---
+  prev.height=48 -> next.height=49
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=50 hash=block-50 ---
+  prev.height=49 -> next.height=50
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=50, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+--- Block h=51 hash=block-51 ---
+  prev.height=50 -> next.height=51
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=52 hash=block-52 ---
+  prev.height=51 -> next.height=52
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=53 hash=block-53 ---
+  prev.height=52 -> next.height=53
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=54 hash=block-54 ---
+  prev.height=53 -> next.height=54
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=55 hash=block-55 ---
+  prev.height=54 -> next.height=55
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=56 hash=block-56 ---
+  prev.height=55 -> next.height=56
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=57 hash=block-57 ---
+  prev.height=56 -> next.height=57
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=58 hash=block-58 ---
+  prev.height=57 -> next.height=58
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=59 hash=block-59 ---
+  prev.height=58 -> next.height=59
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=60 hash=block-60 ---
+  prev.height=59 -> next.height=60
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=61 hash=block-61 ---
+  prev.height=60 -> next.height=61
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=62 hash=block-62 ---
+  prev.height=61 -> next.height=62
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=63 hash=block-63 ---
+  prev.height=62 -> next.height=63
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=64 hash=block-64 ---
+  prev.height=63 -> next.height=64
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=65 hash=block-65 ---
+  prev.height=64 -> next.height=65
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=66 hash=block-66 ---
+  prev.height=65 -> next.height=66
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=67 hash=block-67 ---
+  prev.height=66 -> next.height=67
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=68 hash=block-68 ---
+  prev.height=67 -> next.height=68
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=69 hash=block-69 ---
+  prev.height=68 -> next.height=69
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=70 hash=block-70 ---
+  prev.height=69 -> next.height=70
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=71 hash=block-71 ---
+  prev.height=70 -> next.height=71
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=72 hash=block-72 ---
+  prev.height=71 -> next.height=72
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=73 hash=block-73 ---
+  prev.height=72 -> next.height=73
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=74 hash=block-74 ---
+  prev.height=73 -> next.height=74
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=75 hash=block-75 ---
+  prev.height=74 -> next.height=75
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=75, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+--- Block h=76 hash=block-76 ---
+  prev.height=75 -> next.height=76
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=77 hash=block-77 ---
+  prev.height=76 -> next.height=77
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=78 hash=block-78 ---
+  prev.height=77 -> next.height=78
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=79 hash=block-79 ---
+  prev.height=78 -> next.height=79
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=80 hash=block-80 ---
+  prev.height=79 -> next.height=80
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=81 hash=block-81 ---
+  prev.height=80 -> next.height=81
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=82 hash=block-82 ---
+  prev.height=81 -> next.height=82
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=83 hash=block-83 ---
+  prev.height=82 -> next.height=83
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=84 hash=block-84 ---
+  prev.height=83 -> next.height=84
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=85 hash=block-85 ---
+  prev.height=84 -> next.height=85
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=86 hash=block-86 ---
+  prev.height=85 -> next.height=86
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=87 hash=block-87 ---
+  prev.height=86 -> next.height=87
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=88 hash=block-88 ---
+  prev.height=87 -> next.height=88
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=89 hash=block-89 ---
+  prev.height=88 -> next.height=89
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=90 hash=block-90 ---
+  prev.height=89 -> next.height=90
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=91 hash=block-91 ---
+  prev.height=90 -> next.height=91
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=92 hash=block-92 ---
+  prev.height=91 -> next.height=92
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=93 hash=block-93 ---
+  prev.height=92 -> next.height=93
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=94 hash=block-94 ---
+  prev.height=93 -> next.height=94
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=95 hash=block-95 ---
+  prev.height=94 -> next.height=95
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=96 hash=block-96 ---
+  prev.height=95 -> next.height=96
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=97 hash=block-97 ---
+  prev.height=96 -> next.height=97
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=98 hash=block-98 ---
+  prev.height=97 -> next.height=98
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=99 hash=block-99 ---
+  prev.height=98 -> next.height=99
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=100 hash=block-100 ---
+  prev.height=99 -> next.height=100
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=100, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+--- Block h=101 hash=block-101 ---
+  prev.height=100 -> next.height=101
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=102 hash=block-102 ---
+  prev.height=101 -> next.height=102
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=103 hash=block-103 ---
+  prev.height=102 -> next.height=103
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=104 hash=block-104 ---
+  prev.height=103 -> next.height=104
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=105 hash=block-105 ---
+  prev.height=104 -> next.height=105
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=106 hash=block-106 ---
+  prev.height=105 -> next.height=106
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=107 hash=block-107 ---
+  prev.height=106 -> next.height=107
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=108 hash=block-108 ---
+  prev.height=107 -> next.height=108
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=109 hash=block-109 ---
+  prev.height=108 -> next.height=109
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=110 hash=block-110 ---
+  prev.height=109 -> next.height=110
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=111 hash=block-111 ---
+  prev.height=110 -> next.height=111
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=112 hash=block-112 ---
+  prev.height=111 -> next.height=112
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=113 hash=block-113 ---
+  prev.height=112 -> next.height=113
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=114 hash=block-114 ---
+  prev.height=113 -> next.height=114
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=115 hash=block-115 ---
+  prev.height=114 -> next.height=115
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=116 hash=block-116 ---
+  prev.height=115 -> next.height=116
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=117 hash=block-117 ---
+  prev.height=116 -> next.height=117
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=118 hash=block-118 ---
+  prev.height=117 -> next.height=118
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=119 hash=block-119 ---
+  prev.height=118 -> next.height=119
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=120 hash=block-120 ---
+  prev.height=119 -> next.height=120
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=121 hash=block-121 ---
+  prev.height=120 -> next.height=121
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=122 hash=block-122 ---
+  prev.height=121 -> next.height=122
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=123 hash=block-123 ---
+  prev.height=122 -> next.height=123
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=124 hash=block-124 ---
+  prev.height=123 -> next.height=124
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=125 hash=block-125 ---
+  prev.height=124 -> next.height=125
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=125, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+--- Block h=126 hash=block-126 ---
+  prev.height=125 -> next.height=126
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=127 hash=block-127 ---
+  prev.height=126 -> next.height=127
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=128 hash=block-128 ---
+  prev.height=127 -> next.height=128
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=129 hash=block-129 ---
+  prev.height=128 -> next.height=129
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=130 hash=block-130 ---
+  prev.height=129 -> next.height=130
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=131 hash=block-131 ---
+  prev.height=130 -> next.height=131
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=132 hash=block-132 ---
+  prev.height=131 -> next.height=132
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=133 hash=block-133 ---
+  prev.height=132 -> next.height=133
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=134 hash=block-134 ---
+  prev.height=133 -> next.height=134
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=135 hash=block-135 ---
+  prev.height=134 -> next.height=135
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=136 hash=block-136 ---
+  prev.height=135 -> next.height=136
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=137 hash=block-137 ---
+  prev.height=136 -> next.height=137
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=138 hash=block-138 ---
+  prev.height=137 -> next.height=138
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=139 hash=block-139 ---
+  prev.height=138 -> next.height=139
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=140 hash=block-140 ---
+  prev.height=139 -> next.height=140
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=141 hash=block-141 ---
+  prev.height=140 -> next.height=141
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=142 hash=block-142 ---
+  prev.height=141 -> next.height=142
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=143 hash=block-143 ---
+  prev.height=142 -> next.height=143
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=144 hash=block-144 ---
+  prev.height=143 -> next.height=144
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=145 hash=block-145 ---
+  prev.height=144 -> next.height=145
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=146 hash=block-146 ---
+  prev.height=145 -> next.height=146
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=147 hash=block-147 ---
+  prev.height=146 -> next.height=147
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=148 hash=block-148 ---
+  prev.height=147 -> next.height=148
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=149 hash=block-149 ---
+  prev.height=148 -> next.height=149
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=150 hash=block-150 ---
+  prev.height=149 -> next.height=150
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=150, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+--- Block h=151 hash=block-151 ---
+  prev.height=150 -> next.height=151
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=152 hash=block-152 ---
+  prev.height=151 -> next.height=152
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=153 hash=block-153 ---
+  prev.height=152 -> next.height=153
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=154 hash=block-154 ---
+  prev.height=153 -> next.height=154
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=155 hash=block-155 ---
+  prev.height=154 -> next.height=155
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=156 hash=block-156 ---
+  prev.height=155 -> next.height=156
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=157 hash=block-157 ---
+  prev.height=156 -> next.height=157
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=158 hash=block-158 ---
+  prev.height=157 -> next.height=158
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=159 hash=block-159 ---
+  prev.height=158 -> next.height=159
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=160 hash=block-160 ---
+  prev.height=159 -> next.height=160
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=161 hash=block-161 ---
+  prev.height=160 -> next.height=161
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=162 hash=block-162 ---
+  prev.height=161 -> next.height=162
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=163 hash=block-163 ---
+  prev.height=162 -> next.height=163
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=164 hash=block-164 ---
+  prev.height=163 -> next.height=164
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=165 hash=block-165 ---
+  prev.height=164 -> next.height=165
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=166 hash=block-166 ---
+  prev.height=165 -> next.height=166
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=167 hash=block-167 ---
+  prev.height=166 -> next.height=167
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=168 hash=block-168 ---
+  prev.height=167 -> next.height=168
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=169 hash=block-169 ---
+  prev.height=168 -> next.height=169
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=170 hash=block-170 ---
+  prev.height=169 -> next.height=170
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=171 hash=block-171 ---
+  prev.height=170 -> next.height=171
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=172 hash=block-172 ---
+  prev.height=171 -> next.height=172
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=173 hash=block-173 ---
+  prev.height=172 -> next.height=173
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=174 hash=block-174 ---
+  prev.height=173 -> next.height=174
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=175 hash=block-175 ---
+  prev.height=174 -> next.height=175
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=175, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+--- Block h=176 hash=block-176 ---
+  prev.height=175 -> next.height=176
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=177 hash=block-177 ---
+  prev.height=176 -> next.height=177
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=178 hash=block-178 ---
+  prev.height=177 -> next.height=178
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=179 hash=block-179 ---
+  prev.height=178 -> next.height=179
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=180 hash=block-180 ---
+  prev.height=179 -> next.height=180
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=181 hash=block-181 ---
+  prev.height=180 -> next.height=181
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=182 hash=block-182 ---
+  prev.height=181 -> next.height=182
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=183 hash=block-183 ---
+  prev.height=182 -> next.height=183
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=184 hash=block-184 ---
+  prev.height=183 -> next.height=184
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=185 hash=block-185 ---
+  prev.height=184 -> next.height=185
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=186 hash=block-186 ---
+  prev.height=185 -> next.height=186
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=187 hash=block-187 ---
+  prev.height=186 -> next.height=187
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=188 hash=block-188 ---
+  prev.height=187 -> next.height=188
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=189 hash=block-189 ---
+  prev.height=188 -> next.height=189
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=190 hash=block-190 ---
+  prev.height=189 -> next.height=190
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=191 hash=block-191 ---
+  prev.height=190 -> next.height=191
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=192 hash=block-192 ---
+  prev.height=191 -> next.height=192
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=193 hash=block-193 ---
+  prev.height=192 -> next.height=193
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=194 hash=block-194 ---
+  prev.height=193 -> next.height=194
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=195 hash=block-195 ---
+  prev.height=194 -> next.height=195
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=196 hash=block-196 ---
+  prev.height=195 -> next.height=196
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=197 hash=block-197 ---
+  prev.height=196 -> next.height=197
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=198 hash=block-198 ---
+  prev.height=197 -> next.height=198
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=199 hash=block-199 ---
+  prev.height=198 -> next.height=199
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+--- Block h=200 hash=block-200 ---
+  prev.height=199 -> next.height=200
+  difficulty: 1000000 -> 1000000 (reason=on_target, dt=240)
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: height=200, kind=OK, totalThe=0, totalAccountThe=0, totalVaultThe=0
+=== REPLAY SUMMARY ===
+Final height = 200
+Final lastBlockHash = block-200
+Final difficulty = 1000000
+Heights monotonic & aligned? true
+lastBlockHash aligned with block.hash? true
+Difficulty non-decreasing over run? true
+--- Difficulty reason counts ---
+  safe_mode  = 1
+  too_fast   = 0
+  too_slow   = 0
+  on_target  = 199
+=== FULL L1 REPLAY HARNESS COMPLETE ===

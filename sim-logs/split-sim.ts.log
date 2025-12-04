@@ -1,0 +1,93 @@
+=== SPLIT SIM ===
+
+Initial state: { height: 0, lastBlockHash: null }
+Split schedule: [ { height: 10, factor: 2n, label: 'TEST_SPLIT_2X_AT_10' } ] 
+
+
+>>> APPLY BLOCK 1
+After block: {
+  height: 1,
+  lastBlockHash: '0x9fa586946ee9fb17bd532de84e39e4b69606c996ab03ca4f275556c5a8ffac13'
+}
+
+>>> APPLY BLOCK 2
+After block: {
+  height: 2,
+  lastBlockHash: '0x3b47b294fd3bb5cc4e29043f86b5cec064cdd3c171678315cf91f1f18b671010'
+}
+
+>>> APPLY BLOCK 3
+After block: {
+  height: 3,
+  lastBlockHash: '0xa5d0adc1493489d647d25c3f6b315340a6d61b1c8e78b2615f20160984ba40ea'
+}
+
+>>> APPLY BLOCK 4
+After block: {
+  height: 4,
+  lastBlockHash: '0x474711eb828ecca19076df298a2da9240bb205e604093e1346a56cf9f114aef2'
+}
+
+>>> APPLY BLOCK 5
+After block: {
+  height: 5,
+  lastBlockHash: '0xfced9b4071754060efa10c5e164c19c33fa117d01ee833931e34d83acacdf0d0'
+}
+
+>>> APPLY BLOCK 6
+After block: {
+  height: 6,
+  lastBlockHash: '0x3306097683e27ce9542e7d04c928aa2362c477a7272a1a87a9e2b80bbf037b5c'
+}
+
+>>> APPLY BLOCK 7
+After block: {
+  height: 7,
+  lastBlockHash: '0x9bef4e5cdbfbac5d6ef7b3f469f591886bb91e893da8e1cce447b0e76c5649d9'
+}
+
+>>> APPLY BLOCK 8
+After block: {
+  height: 8,
+  lastBlockHash: '0x58fe0ab43b891c54928572ed80b208dc5fc6b13ed0bb43668979fca909ca61f1'
+}
+
+>>> APPLY BLOCK 9
+After block: {
+  height: 9,
+  lastBlockHash: '0x2661751ad2dd9e03ff0490ebefab856f2bada4cd5f74f2c286bb21d0db014c6a'
+}
+
+>>> APPLY BLOCK 10
+After block: {
+  height: 10,
+  lastBlockHash: '0x07c3eb6df44e8ea15a9474b5650fc67e73824c296ec8567864f7b122780ebed1'
+}
+
+*** APPLY SPLIT x2 at height 10 ***
+
+>>> APPLY BLOCK 11
+After block: {
+  height: 11,
+  lastBlockHash: '0xd501cf4b4d7e0d82f09e3d53d9f631dc6ba11dfd4684e62093d2eeceb359c9f1'
+}
+
+>>> APPLY BLOCK 12
+After block: {
+  height: 12,
+  lastBlockHash: '0xaea7033978a9bd8d9daa5a3e523d105a90c5f89ed60ddcf3f4413c839eefee30'
+}
+
+=== FINAL STATE AFTER SPLIT SIM ===
+Height: 12
+Last hash: 0xaea7033978a9bd8d9daa5a3e523d105a90c5f89ed60ddcf3f4413c839eefee30
+
+Accounts:
+   ADDR_A { balanceTHE: 1860n }
+   ADDR_B { balanceTHE: 140n }
+   MINER_X { balanceTHE: 198n }
+   NIP_POOL { balanceTHE: 22n }
+
+Vaults:
+
+=== SPLIT SIM COMPLETE ===

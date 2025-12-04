@@ -1,0 +1,4 @@
+=== Block Hash Demo (Pack 14.1) ===
+expected hash: aad88b238951882f1e7931b15b0b48f74f188a3186a9de149dffc1cb9c627e6c
+block.hash:     aad88b238951882f1e7931b15b0b48f74f188a3186a9de149dffc1cb9c627e6c
+=== OK: canonical header hash enforced ===

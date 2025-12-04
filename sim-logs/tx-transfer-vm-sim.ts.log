@@ -1,0 +1,11 @@
+=== TRANSFER_THE VM SIM (Pack 17.0) ===
+
+--- BEFORE TRANSFER ---
+sender   : ADDR_TX_A balanceTHE = 1000n
+receiver : ADDR_TX_B balanceTHE = 0n
+
+--- AFTER TRANSFER ---
+sender   : ADDR_TX_A balanceTHE = 750n
+receiver : ADDR_TX_B balanceTHE = 250n
+
+=== TRANSFER_THE VM SIM COMPLETE ===

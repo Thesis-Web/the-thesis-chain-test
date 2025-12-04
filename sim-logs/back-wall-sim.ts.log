@@ -1,0 +1,17 @@
+=== BACK-WALL SIM (Pack 48) ===
+--- DEFAULT GUARDS (monitor mode) ---
+{
+  height: 0,
+  totalAccountThe: 1000n,
+  totalVaultThe: 500n,
+  totalThe: 1500n,
+  kind: 'OK'
+}
+--- STRICT GUARDS (demonstrate WARN/BREACH) ---
+{
+  height: 0,
+  totalAccountThe: 1000n,
+  totalVaultThe: 500n,
+  totalThe: 1500n,
+  kind: 'HARD_FLOOR_BREACH'
+}

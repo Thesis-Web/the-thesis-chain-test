@@ -1,0 +1,59 @@
+=== DEV SPLIT SIM (EU oracle, Pack 27) ===
+
+--- HEIGHT 0 ---
+  EU/THE price: 1.0000
+  cumulativeFactor: 1
+  rewardUnits THE: 10
+  normalizedRewardValue (THE): 10.0000
+  didSplit: false
+  reason: below_threshold
+
+--- HEIGHT 1999 ---
+  EU/THE price: 1.9020
+  cumulativeFactor: 1
+  rewardUnits THE: 10
+  normalizedRewardValue (THE): 10.0000
+  didSplit: false
+  reason: below_threshold
+
+--- HEIGHT 3999 ---
+  EU/THE price: 2.3974
+  cumulativeFactor: 1
+  rewardUnits THE: 10
+  normalizedRewardValue (THE): 10.0000
+  didSplit: false
+  reason: below_threshold
+
+--- HEIGHT 5999 ---
+  EU/THE price: 2.6693
+  cumulativeFactor: 1
+  rewardUnits THE: 10
+  normalizedRewardValue (THE): 10.0000
+  didSplit: false
+  reason: below_threshold
+
+--- HEIGHT 6443 ---
+  EU/THE price: 2.7105
+  cumulativeFactor: 1
+  rewardUnits THE: 10
+  normalizedRewardValue (THE): 10.0000
+  didSplit: false
+  reason: below_threshold
+
+--- HEIGHT 7999 ---
+  EU/THE price: 2.8185
+  cumulativeFactor: 1
+  rewardUnits THE: 10
+  normalizedRewardValue (THE): 10.0000
+  didSplit: false
+  reason: below_threshold
+
+--- HEIGHT 9999 ---
+  EU/THE price: 2.9004
+  cumulativeFactor: 1
+  rewardUnits THE: 10
+  normalizedRewardValue (THE): 10.0000
+  didSplit: false
+  reason: below_threshold
+
+=== DEV SPLIT SIM COMPLETE ===

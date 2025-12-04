@@ -1,0 +1,15 @@
+=== FULL LEDGER STATE V1 SIM ===
+s0.chain.height = 0
+s0.chain.accounts.size = 0
+s0.chain.vaults.size = 0
+s0.euRegistry.byId.size = 0
+s0.euRegistry.byOwner.size = 0
+s1.chain.height (clone) = 0
+s1.euRegistry.byId.size (clone) = 0
+=== FullLedgerDeltaV1 ===
+  ledger: accounts=0, vaults=0, euCerts=0
+  vaultDelta.vaults=0
+  euDelta.certs=0
+  splitEvent: none
+  backWallEvent: none
+=== FULL LEDGER STATE V1 SIM COMPLETE ===

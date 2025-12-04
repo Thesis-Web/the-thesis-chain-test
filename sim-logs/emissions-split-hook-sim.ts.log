@@ -1,0 +1,30 @@
+Base band: {
+  heightFrom: 0,
+  heightTo: 61199,
+  minerRewardThe: 9n,
+  nipRewardThe: 1n
+}
+After split factor 2: {
+  heightFrom: 0,
+  heightTo: 61199,
+  minerRewardThe: 18n,
+  nipRewardThe: 2n
+}
+After split factor 3: {
+  heightFrom: 0,
+  heightTo: 61199,
+  minerRewardThe: 27n,
+  nipRewardThe: 3n
+}
+After split factor 5: {
+  heightFrom: 0,
+  heightTo: 61199,
+  minerRewardThe: 45n,
+  nipRewardThe: 5n
+}
+After cumulative factor 2: {
+  heightFrom: 0,
+  heightTo: 61199,
+  minerRewardThe: 18n,
+  nipRewardThe: 2n
+}

@@ -1,0 +1,5 @@
+=== APPLYBLOCK SIM ===
+s0.chain.height = 0
+s1.chain.height = 1
+s1.chain.lastBlockHash = deadbeef
+=== APPLYBLOCK SIM COMPLETE ===

@@ -1,0 +1,15 @@
+=== VAULT VM SIM (Pack 23) ===
+
+--- GENESIS LEDGER ---
+vaults.size       : 0
+
+--- AFTER VAULT_CREATE ---
+vaults.size       : 1
+
+--- FINAL VAULT STATE ---
+vault.id          : VAULT_VM_SIM
+vault.owner       : OWNER_VAULT_VM_SIM
+vault.balanceTHE  : 70000n
+expected balance  : 70000n
+
+=== VAULT VM SIM COMPLETE ===

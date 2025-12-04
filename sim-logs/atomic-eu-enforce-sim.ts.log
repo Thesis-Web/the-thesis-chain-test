@@ -1,0 +1,29 @@
+=== ATOMIC EU ENFORCE SIM ===
+Scenario 1 — Baseline default policy (atomicUnit = 1)
+EU-0: OK value=0
+  assertEUAtomicAmount: OK
+EU-1: OK value=1
+  assertEUAtomicAmount: OK
+EU-10: OK value=10
+  assertEUAtomicAmount: OK
+=== ATOMIC EU ENFORCE SIM ===
+Scenario 2 — Negative + capped supply
+EU-NEGATIVE: ERROR kind=NEGATIVE message=Atomic amount must not be negative value=-1 atomicUnit=1 maxSupply=100
+  assertEUAtomicAmount: threw -> [AtomicCoinError:NEGATIVE] Atomic amount must not be negative (value=-1, atomicUnit=1, maxSupply=100)
+EU-OK-50: OK value=50
+  assertEUAtomicAmount: OK
+EU-OK-100: OK value=100
+  assertEUAtomicAmount: OK
+EU-OVER-101: ERROR kind=OVER_MAX_SUPPLY message=Amount exceeds the configured maxSupply value=101 atomicUnit=1 maxSupply=100
+  assertEUAtomicAmount: threw -> [AtomicCoinError:OVER_MAX_SUPPLY] Amount exceeds the configured maxSupply (value=101, atomicUnit=1, maxSupply=100)
+=== ATOMIC EU ENFORCE SIM ===
+Scenario 3 — Coarser atomicUnit (100n)
+EU-COARSE-0: OK value=0
+  assertEUAtomicAmount: OK
+EU-COARSE-100: OK value=100
+  assertEUAtomicAmount: OK
+EU-COARSE-200: OK value=200
+  assertEUAtomicAmount: OK
+EU-COARSE-150: ERROR kind=NON_ATOMIC message=Amount is not an exact multiple of the atomic unit value=150 atomicUnit=100
+  assertEUAtomicAmount: threw -> [AtomicCoinError:NON_ATOMIC] Amount is not an exact multiple of the atomic unit (value=150, atomicUnit=100)
+=== ATOMIC EU ENFORCE SIM COMPLETE ===
