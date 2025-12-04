@@ -91,20 +91,20 @@ export function main(): void {
 
   // 5) Print summary of resulting EuRegistry.
   console.log("\n--- FINAL EU REGISTRY ---");
-  const certA = getEuCertificate(ledger3.eu, mintTxA.euCertificateId);
-  const certB = getEuCertificate(ledger3.eu, mintTxB.euCertificateId);
+  const certA = getEuCertificate(ledger3.euCertRegistry, mintTxA.euCertificateId);
+  const certB = getEuCertificate(ledger3.euCertRegistry, mintTxB.euCertificateId);
 
   console.log("certA:", certA);
   console.log("certB:", certB);
 
   console.log("\n--- Helper predicates ---");
-  console.log("isEuActive(A):   ", isEuActive(ledger3.eu, mintTxA.euCertificateId));
-  console.log("isEuRedeemed(A): ", isEuRedeemed(ledger3.eu, mintTxA.euCertificateId));
-  console.log("isEuActive(B):   ", isEuActive(ledger3.eu, mintTxB.euCertificateId));
-  console.log("isEuRedeemed(B): ", isEuRedeemed(ledger3.eu, mintTxB.euCertificateId));
+  console.log("isEuActive(A):   ", isEuActive(ledger3.euCertRegistry, mintTxA.euCertificateId));
+  console.log("isEuRedeemed(A): ", isEuRedeemed(ledger3.euCertRegistry, mintTxA.euCertificateId));
+  console.log("isEuActive(B):   ", isEuActive(ledger3.euCertRegistry, mintTxB.euCertificateId));
+  console.log("isEuRedeemed(B): ", isEuRedeemed(ledger3.euCertRegistry, mintTxB.euCertificateId));
 
   console.log("\n--- Asserting invariants ---");
-  assertEuInvariants(ledger3.chain, ledger3.eu);
+  assertEuInvariants(ledger3.chain, ledger3.euCertRegistry);
 
   console.log("\n=== EU TX SHAPES SIM COMPLETE ===");
 }

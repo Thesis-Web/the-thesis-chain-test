@@ -1,44 +1,53 @@
 // TARGET: chain src/consensus/tx/tx-dispatcher.ts
 // src/consensus/tx/tx-dispatcher.ts
 // ---------------------------------------------------------------------------
-// Pack 22.1 — THE/EU VM wiring (consensus-side)
+// Pack 22.x — THE/EU VM wiring (consensus-side)
 // ---------------------------------------------------------------------------
 //
-// This module provides a single entry point:
+// Single entry point:
 //
 //   applyBlockTx(prevLedger, tx) => nextLedger
 //
-// In Pack 15.2 this was a structural no-op used only to validate tx shapes.
-// Pack 17.0 introduced *real* value movement for TRANSFER_THE when the ledger
-// matched the concrete FullLedgerStateV1 shape used by consensus.
+// Behaviour:
 //
-// With Pack 22.x we extend the concrete VM to also handle:
-//   - MINT_EU   → register a new EuCertificate in the EuRegistry.
-//   - REDEEM_EU → mark an existing certificate as redeemed in the EuRegistry.
+//   • If `prevLedger` is a FullLedgerStateV1 (consensus canonical shape):
+//       - TRANSFER_THE  → debit/credit accounts on ledger.chain.accounts
+//       - VAULT_CREATE  → create an empty vault in ledger.chain.vaults
+//       - VAULT_DEPOSIT → increase vault.balanceTHE
+//       - VAULT_WITHDRAW→ decrease vault.balanceTHE
+//       - MINT_EU       → register EuCertificate in ledger.euCertRegistry
+//       - REDEEM_EU     → mark EuCertificate as REDEEMED
+//       - SPLIT_AWARD / INTERNAL_REWARD → explicit no-ops for now
 //
-// Rules:
-//   - If the ledger is a FullLedgerStateV1:
-//       • TRANSFER_THE debits `from` and credits `to` on ledger.chain.accounts.
-//       • MINT_EU registers a new EuCertificate bound to an existing vault.
-//       • REDEEM_EU flips certificate status to REDEEMED in the EuRegistry.
-//       • SPLIT_AWARD and INTERNAL_REWARD remain no-ops for now.
-//   - For non-FullLedgerStateV1 ledgers, we keep the previous behavior:
-//       • validate txType and return the ledger unchanged.
+//   • For non-FullLedgerStateV1 ledgers (generic sims / legacy callers):
+//       - Validate txType is known and return the ledger unchanged.
+//
+// All mutations are **in-place** on the supplied FullLedgerStateV1. This is
+// intentional for sims and consensus: the ledger object flows through the
+// chain and evolves, rather than allocating a fresh object each time.
 // ---------------------------------------------------------------------------
 
-import type { TheTx, TxMintEU, TxRedeemEU, TxVaultCreate, TxVaultDeposit, TxVaultWithdraw } from "./tx-types";
+import type {
+  TheTx,
+  TxMintEU,
+  TxRedeemEU,
+  TxVaultCreate,
+  TxVaultDeposit,
+  TxVaultWithdraw
+} from "./tx-types";
 import type { FullLedgerStateV1 } from "../ledger-state";
 import { creditAccount, debitAccount } from "../../ledger/state";
-import { createVault, depositToVault, withdrawFromVault } from "../../ledger/vault";
+import {
+  createVault,
+  depositToVault,
+  withdrawFromVault
+} from "../../ledger/vault";
 import {
   registerEuCertificate,
-  markEuRedeemed
+  markEuRedeemed,
+  type EuCertificate,
+  type EuCertificateId
 } from "../../ledger/eu";
-import type {
-  EuCertificate,
-  EuCertificateId
-} from "../../ledger/eu";
-import type { Address, Amount } from "../../types/primitives";
 
 // ---------------------------------------------------------------------------
 // Runtime type guard for FullLedgerStateV1
@@ -47,19 +56,22 @@ import type { Address, Amount } from "../../types/primitives";
 function isFullLedgerStateV1(value: unknown): value is FullLedgerStateV1 {
   if (!value || typeof value !== "object") return false;
 
-  const candidate = value as FullLedgerStateV1;
-  const { chain, eu } = candidate as any;
+  const candidate = value as any;
+  const { chain, euCertRegistry } = candidate;
 
+  // Basic chain shape checks.
   if (!chain || typeof chain !== "object") return false;
   if (!(chain.accounts instanceof Map)) return false;
   if (!(chain.vaults instanceof Map)) return false;
 
-  if (!eu || typeof eu !== "object") return false;
-  if (!(eu.byId instanceof Map)) return false;
-  if (!(eu.byOwner instanceof Map)) return false;
+  // EU certificate registry shape checks.
+  if (!euCertRegistry || typeof euCertRegistry !== "object") return false;
+  if (!(euCertRegistry.byId instanceof Map)) return false;
+  if (!(euCertRegistry.byOwner instanceof Map)) return false;
 
   return true;
 }
+
 
 // ---------------------------------------------------------------------------
 // Internal helper: concrete VM for FullLedgerStateV1
@@ -77,7 +89,7 @@ function applyBlockTxFullLedger(
         throw new Error("TRANSFER_THE: amountTHE must be positive");
       }
 
-      // Mutate the underlying chain accounts in-place.
+      // Mutate underlying chain accounts in-place.
       debitAccount(ledger.chain, from, amountTHE);
       creditAccount(ledger.chain, to, amountTHE);
       return ledger;
@@ -130,7 +142,7 @@ function applyBlockTxFullLedger(
         status: "ACTIVE"
       };
 
-      registerEuCertificate(ledger.chain, ledger.eu, cert);
+      registerEuCertificate(ledger.chain, ledger.euCertRegistry, cert);
       return ledger;
     }
 
@@ -138,14 +150,14 @@ function applyBlockTxFullLedger(
       const { euCertificateId } = tx as TxRedeemEU;
       const id: EuCertificateId = euCertificateId;
 
-      markEuRedeemed(ledger.eu, id);
+      markEuRedeemed(ledger.euCertRegistry, id);
       return ledger;
     }
 
     case "SPLIT_AWARD":
     case "INTERNAL_REWARD":
-      // Future packs will wire these, but for now they are explicit no-ops
-      // on the concrete ledger type.
+      // Future packs will wire these; for now they are explicit no-ops on the
+      // concrete ledger type.
       return ledger;
 
     default: {
@@ -164,10 +176,10 @@ function applyBlockTxFullLedger(
  * Apply a single tx to the given ledger, returning the next ledger snapshot.
  *
  * NOTE:
- *   - `LState` is kept generic so that different sims / environments can
- *     plug in their own concrete ledger representation.
+ *   - `LState` is kept generic so different sims / environments can plug in
+ *     their own concrete ledger representations.
  *   - If the ledger is a FullLedgerStateV1 we route through the concrete VM
- *     above; otherwise we behave as a structural no-op (Pack 15.2 behavior).
+ *     above; otherwise we behave as a structural no-op (Pack 15.2 behaviour).
  */
 export function applyBlockTx<LState>(prevLedger: LState, tx: TheTx): LState {
   if (isFullLedgerStateV1(prevLedger)) {
@@ -175,8 +187,8 @@ export function applyBlockTx<LState>(prevLedger: LState, tx: TheTx): LState {
     return next as unknown as LState;
   }
 
-  // Fallback behavior for non-FullLedgerStateV1 ledgers: keep Pack 15.2
-  // semantics (validate txType, return ledger unchanged).
+  // Fallback behaviour for non-FullLedgerStateV1 ledgers:
+  // keep Pack 15.2 semantics (validate txType, return ledger unchanged).
   switch (tx.txType) {
     case "TRANSFER_THE":
     case "MINT_EU":

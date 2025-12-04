@@ -36,8 +36,8 @@ function main(): void {
   console.log("chain.lastBlockHash:", state.ledger.chain.lastBlockHash);
   console.log("accounts.size     :", state.ledger.chain.accounts.size);
   console.log("vaults.size       :", state.ledger.chain.vaults.size);
-  console.log("eu.byId.size      :", state.ledger.eu.byId.size);
-  console.log("eu.byOwner.size   :", state.ledger.eu.byOwner.size);
+  console.log("eu.byId.size      :", state.ledger.euCertRegistry.byId.size);
+  console.log("eu.byOwner.size   :", state.ledger.euCertRegistry.byOwner.size);
 
   console.log("\n=== SMOKE SIM COMPLETE ===");
 }

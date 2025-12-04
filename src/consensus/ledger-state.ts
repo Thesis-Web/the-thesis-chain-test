@@ -25,15 +25,15 @@ import { createEmptyEuRegistry } from "../ledger/eu";
 /**
  * FullLedgerStateV1 is the concrete LState used by the consensus engine.
  *
- *  - chain: the base ledger (accounts + vaults + height/hash metadata)
- *  - eu:    the EU certificate registry layered on top of vaults
+ *  - chain:          the base ledger (accounts + vaults + height/hash metadata)
+ *  - euCertRegistry: the EU certificate registry layered on top of vaults
  *
  * This type does not add new behavior; it simply packages the existing
  * ledger modules into a single object suitable for ChainState<LState>.
  */
 export interface FullLedgerStateV1 {
   readonly chain: LedgerChainState;
-  readonly eu: EuRegistry;
+  readonly euCertRegistry: EuRegistry;
 }
 
 // ---------------------------------------------------------------------------
@@ -50,6 +50,26 @@ export interface FullLedgerStateV1 {
 export function makeEmptyFullLedgerStateV1(): FullLedgerStateV1 {
   return {
     chain: createEmptyChainState(),
-    eu: createEmptyEuRegistry()
+    euCertRegistry: createEmptyEuRegistry()
   };
+}
+
+/**
+ * Clone a FullLedgerStateV1, copying all Map instances so that callers can
+ * safely mutate the clone without impacting the original.
+ */
+export function cloneFullLedgerStateV1(state: FullLedgerStateV1): FullLedgerStateV1 {
+  const chain: LedgerChainState = {
+    height: state.chain.height,
+    lastBlockHash: state.chain.lastBlockHash,
+    accounts: new Map(state.chain.accounts),
+    vaults: new Map(state.chain.vaults)
+  };
+
+  const euCertRegistry: EuRegistry = {
+    byId: new Map(state.euCertRegistry.byId),
+    byOwner: new Map(state.euCertRegistry.byOwner)
+  };
+
+  return { chain, euCertRegistry };
 }

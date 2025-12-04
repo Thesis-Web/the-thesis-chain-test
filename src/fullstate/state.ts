@@ -1,65 +1,36 @@
 // TARGET: chain src/fullstate/state.ts
 // src/fullstate/state.ts
 // ---------------------------------------------------------------------------
-// Pack 41 — FullLedgerStateV1 (L1 machine-state aggregator)
+// Fullstate façade — re-export canonical FullLedgerStateV1 + helpers
 // ---------------------------------------------------------------------------
 //
-// This module defines a small orchestration layer that merges the existing
-// ledger ChainState (accounts + vaults) with the EuRegistry into a single
-// "FullLedgerStateV1".
+// This module exists to give sims / tooling a stable import path while keeping
+// the *authoritative* definition of FullLedgerStateV1 in
+// src/consensus/ledger-state.ts.
 //
-// It does **not** change how the underlying ledger or EU modules work. It is
-// a thin, strongly-typed wrapper that gives consensus / sims / tools one
-// place to look when they need the full L1 economic view.
-//
-// Later packs (applyBlock wiring, replay harness, etc.) will thread this
-// through ConsensusState, but Pack 41 is intentionally minimal: it focuses on
-// clean structure, not new behavior.
+// It simply re-exports the type + helpers and provides a small convenience
+// alias for the "createEmpty..." constructor name used in earlier packs.
 // ---------------------------------------------------------------------------
 
-import type { ChainState as LedgerChainState } from "../ledger/state";
-import { createEmptyChainState } from "../ledger/state";
-import type { EuRegistry } from "../ledger/eu";
-import { createEmptyEuRegistry } from "../ledger/eu";
+import type { FullLedgerStateV1 } from "../consensus/ledger-state";
+import {
+  makeEmptyFullLedgerStateV1,
+  cloneFullLedgerStateV1
+} from "../consensus/ledger-state";
 
-export interface FullLedgerStateV1 {
-  readonly chain: LedgerChainState;
-  readonly euRegistry: EuRegistry;
-}
+export type { FullLedgerStateV1 } from "../consensus/ledger-state";
 
-// ---------------------------------------------------------------------------
-// Constructors
-// ---------------------------------------------------------------------------
+/**
+ * Canonical constructor (preferred name).
+ */
+export { makeEmptyFullLedgerStateV1, cloneFullLedgerStateV1 };
 
+/**
+ * Backwards-compatible alias used by older sims.
+ *
+ * Internally delegates to makeEmptyFullLedgerStateV1 so that there is a
+ * single source of truth for genesis construction.
+ */
 export function createEmptyFullLedgerStateV1(): FullLedgerStateV1 {
-  return {
-    chain: createEmptyChainState(),
-    euRegistry: createEmptyEuRegistry()
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Cloning
-// ---------------------------------------------------------------------------
-//
-// For now we keep cloning shallow-but-safe by copying all Map instances.
-// This is sufficient for sims and non-critical tooling. If/when we add more
-// nested structures, we can tighten this further or introduce snapshot
-// helpers.
-// ---------------------------------------------------------------------------
-
-export function cloneFullLedgerStateV1(state: FullLedgerStateV1): FullLedgerStateV1 {
-  const chain: LedgerChainState = {
-    height: state.chain.height,
-    lastBlockHash: state.chain.lastBlockHash,
-    accounts: new Map(state.chain.accounts),
-    vaults: new Map(state.chain.vaults)
-  };
-
-  const euRegistry: EuRegistry = {
-    byId: new Map(state.euRegistry.byId),
-    byOwner: new Map(state.euRegistry.byOwner)
-  };
-
-  return { chain, euRegistry };
+  return makeEmptyFullLedgerStateV1();
 }

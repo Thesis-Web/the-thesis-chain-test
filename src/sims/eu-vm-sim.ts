@@ -43,8 +43,8 @@ export function main(): void {
   console.log("\n--- GENESIS LEDGER ---");
   console.log("chain.height      :", ledger0.chain.height);
   console.log("vaults.size       :", ledger0.chain.vaults.size);
-  console.log("eu.byId.size      :", ledger0.eu.byId.size);
-  console.log("eu.byOwner.size   :", ledger0.eu.byOwner.size);
+  console.log("eu.byId.size      :", ledger0.euCertRegistry.byId.size);
+  console.log("eu.byOwner.size   :", ledger0.euCertRegistry.byOwner.size);
 
   // 2) Create and fund a vault for OWNER.
   createVault(ledger0.chain.vaults, VAULT_ID, OWNER);
@@ -68,8 +68,8 @@ export function main(): void {
   const ledger1 = applyBlockTx(ledger0, mintTx);
 
   console.log("\n--- AFTER MINT_EU ---");
-  console.log("eu.byId.size      :", ledger1.eu.byId.size);
-  console.log("eu.byOwner.size   :", ledger1.eu.byOwner.size);
+  console.log("eu.byId.size      :", ledger1.euCertRegistry.byId.size);
+  console.log("eu.byOwner.size   :", ledger1.euCertRegistry.byOwner.size);
 
   // 4) Apply a REDEEM_EU tx via the consensus VM.
   const redeemTx: TxRedeemEU = {
@@ -80,12 +80,26 @@ export function main(): void {
   const ledger2 = applyBlockTx(ledger1, redeemTx);
 
   console.log("\n--- AFTER REDEEM_EU ---");
-  console.log("eu.byId.size      :", ledger2.eu.byId.size);
-  console.log("eu.byOwner.size   :", ledger2.eu.byOwner.size);
+  console.log("eu.byId.size      :", ledger2.euCertRegistry.byId.size);
+  console.log("eu.byOwner.size   :", ledger2.euCertRegistry.byOwner.size);
 
   // 5) Run basic EU invariants for sanity.
   console.log("\n--- ASSERTING EU INVARIANTS ---");
-  assertEuInvariants(ledger2.chain, ledger2.eu);
+  assertEuInvariants(ledger2.chain, ledger2.euCertRegistry);
+
+  // --- PRINT EU STATUS DETAILS ---
+console.log("\n--- EU STATUS DETAILS ---");
+
+for (const [id, cert] of ledger2.euCertRegistry.byId.entries()) {
+  console.log(`EU ${id}:`);
+  console.log(`  owner: ${cert.owner}`);
+  console.log(`  backingVaultId: ${cert.backingVaultId}`);
+  console.log(`  status: ${cert.status}`);
+  console.log(`  issuedAtHeight: ${cert.issuedAtHeight}`);
+  console.log(`  oracleValueEUAtIssuance: ${cert.oracleValueEUAtIssuance}`);
+  console.log(`  chainHashProof: ${cert.chainHashProof}`);
+}
+
 
   console.log("\n=== EU VM SIM COMPLETE ===");
 }

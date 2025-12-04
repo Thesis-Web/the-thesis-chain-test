@@ -44,7 +44,7 @@ import { buildEuLedgerSnapshotFromRegistry } from "./atomic-eu-ledger-debug";
  */
 interface EuAwareLedgerLike {
   readonly chain: ChainState;
-  readonly euRegistry: EuRegistry;
+  readonly euCertRegistry: EuRegistry;
 }
 
 /**
@@ -67,7 +67,7 @@ function isEuAwareLedgerLike(value: unknown): value is EuAwareLedgerLike {
 
   const anyVal: any = value as any;
   const chain = anyVal.chain;
-  const registry = anyVal.euRegistry;
+  const registry = anyVal.euCertRegistry;
 
   if (!chain || !registry) return false;
   if (!(chain.vaults instanceof Map)) return false;
@@ -86,7 +86,7 @@ function isEuAwareLedgerLike(value: unknown): value is EuAwareLedgerLike {
  * Pack 52/53 helpers.
  *
  * Behaviour:
- *   • If the ledger is not Eu-aware (no chain/euRegistry), this is a no-op.
+ *   • If the ledger is not Eu-aware (no chain/euCertRegistry), this is a no-op.
  *   • If the snapshot is atomic under the given policy, a single debug
  *     log line is emitted.
  *   • If invariants are violated, a detailed error is logged and the
@@ -107,7 +107,7 @@ export function runEuAtomicShadowCheck(
 
   const snapshot: LedgerEuSnapshot = buildEuLedgerSnapshotFromRegistry(
     ledger.chain,
-    ledger.euRegistry,
+    ledger.euCertRegistry,
   );
 
   const h = ctx?.height ?? "?";

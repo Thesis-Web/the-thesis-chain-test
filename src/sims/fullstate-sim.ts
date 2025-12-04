@@ -29,14 +29,14 @@ const s0 = createEmptyFullLedgerStateV1();
 console.log("s0.chain.height =", s0.chain.height);
 console.log("s0.chain.accounts.size =", s0.chain.accounts.size);
 console.log("s0.chain.vaults.size =", s0.chain.vaults.size);
-console.log("s0.euRegistry.byId.size =", s0.euRegistry.byId.size);
-console.log("s0.euRegistry.byOwner.size =", s0.euRegistry.byOwner.size);
+console.log("s0.euCertRegistry.byId.size =", s0.euCertRegistry.byId.size);
+console.log("s0.euCertRegistry.byOwner.size =", s0.euCertRegistry.byOwner.size);
 
 // 2) Clone it and verify shallow structure
 const s1 = cloneFullLedgerStateV1(s0);
 
 console.log("s1.chain.height (clone) =", s1.chain.height);
-console.log("s1.euRegistry.byId.size (clone) =", s1.euRegistry.byId.size);
+console.log("s1.euCertRegistry.byId.size (clone) =", s1.euCertRegistry.byId.size);
 
 // 3) Build an empty composed delta just to validate types + logging
 
