@@ -1,8 +1,0 @@
-=== EU REGISTRY DELTA SIM ===
-Delta cert count: 1
-  id=EU-1
-    before={ id=EU-1 owner=addr1 status=ACTIVE backingVaultId=v1 issuedAtHeight=1 oracleValueEUAtIssuance=1000n activatedByInstitutionId=inst-1 physicalBearer=true chainHashProof=hash-1 }
-    after={ id=EU-1 owner=addr1 status=REDEEMED backingVaultId=v1 issuedAtHeight=1 oracleValueEUAtIssuance=1000n activatedByInstitutionId=inst-1 physicalBearer=true chainHashProof=hash-1 }
-Applied registry byId size: 1
-Applied registry byOwner size: 1
-=== EU REGISTRY DELTA SIM COMPLETE ===

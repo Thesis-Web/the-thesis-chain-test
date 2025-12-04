@@ -1,9 +1,0 @@
-=== ATOMIC COIN VAULT SIM (Pack 50C) ===
-initial: OK raw=0 atomicUnit=1
-after deposit +10: OK raw=10 atomicUnit=1
-after deposit +5: OK raw=15 atomicUnit=1
-after withdraw -7: OK raw=8 atomicUnit=1
-after over-withdraw (expect NEGATIVE): ERROR kind=NEGATIVE message="Atomic amount must not be negative" raw=-1 atomicUnit=1 maxSupply=1000000000
-over maxSupply (expect OVER_MAX_SUPPLY): ERROR kind=OVER_MAX_SUPPLY message="Amount exceeds the configured maxSupply" raw=1000000001 atomicUnit=1 maxSupply=1000000000
-Final demo vault balanceRaw = 8
-=== ATOMIC COIN VAULT SIM COMPLETE ===

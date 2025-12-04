@@ -1,6 +1,0 @@
-=== Header Hash Sim (Pack 14.0) ===
-header hash = 66052454d630d35bfcc9c3f0d8ab4400f2719f855e4a6ad2bae769b0ed0a3738
-syntheticValid = e8d4a50fff
-isHashBelowTarget(syntheticValid) = true
-syntheticValid passed ensurePowMeetsTarget
-=== Header Hash Sim COMPLETE ===
