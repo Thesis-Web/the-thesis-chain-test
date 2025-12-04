@@ -92,7 +92,7 @@ const txTransfer: TheTx = {
   txType: "TRANSFER_THE",
   from: alice,
   to: bob,
-  amountTHE: 25_0000_0000n // move 25 THE
+  amountTHE: 25_0000_000n // move 25 THE
 } as TheTx;
 
 ledger = applyBlockTx(ledger, txTransfer);
@@ -113,7 +113,7 @@ const txVaultCreate: TheTx = {
 const txVaultDeposit: TheTx = {
   txType: "VAULT_DEPOSIT",
   vaultId,
-  amountTHE: 10_0000_0000n
+  amountTHE: 10_0000_000n
 } as TheTx;
 
 ledger = applyBlockTx(ledger, txVaultCreate);
