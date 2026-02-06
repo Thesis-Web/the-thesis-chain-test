@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/chain.ts
 // src/consensus/chain.ts
 // ---------------------------------------------------------------------------
 // L1 Consensus skeleton (v0.4 with Difficulty + SplitEngine shadow integration,

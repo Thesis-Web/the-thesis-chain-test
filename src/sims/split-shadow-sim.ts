@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/split-shadow-sim.ts
 /**
  * Split shadow-mode sim wired to EU oracle.
  *

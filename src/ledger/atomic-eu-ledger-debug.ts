@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/atomic-eu-ledger-debug.ts
 // src/ledger/atomic-eu-ledger-debug.ts
 // ---------------------------------------------------------------------------
 // Pack 53D — EU Atomic Ledger Debug Helpers (non-invasive)

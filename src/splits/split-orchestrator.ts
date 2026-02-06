@@ -1,4 +1,3 @@
-// TARGET: chain src/splits/split-orchestrator.ts
 // src/splits/split-orchestrator.ts
 // ---------------------------------------------------------------------------
 // Split engine orchestrator (v0)

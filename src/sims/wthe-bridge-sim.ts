@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/wthe-bridge-sim.ts
 import { initWTheBridgeState, lockTheForWThe, recordMintOnL2, recordBurnOnL2 } from "../ledger/wthe-bridge";
 
 export function runWTheBridgeSim() {

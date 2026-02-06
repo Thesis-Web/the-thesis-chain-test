@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/consensus-diff-integration-sim.ts
 // src/sims/consensus-diff-integration-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 13.1 — Difficulty governor "chain-style" integration sim

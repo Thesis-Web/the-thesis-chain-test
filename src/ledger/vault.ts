@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/vault.ts
 // src/ledger/vault.ts
 // ---------------------------------------------------------------------------
 // Vault storage + basic ops (Pack 23-FIX — full vault engine rewrite)

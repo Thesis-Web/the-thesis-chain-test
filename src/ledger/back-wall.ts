@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/back-wall.ts
 // src/ledger/back-wall.ts
 // ---------------------------------------------------------------------------
 // Pack 48 — Back-Wall Ledger Framework (monitor-mode scaffolding)

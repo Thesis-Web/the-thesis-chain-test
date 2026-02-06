@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/tx-transfer-vm-sim.ts
 // src/sims/tx-transfer-vm-sim.ts
 // ---------------------------------------------------------------------------
 // TRANSFER_THE VM SIM (Pack 17.0)

@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/pow-consensus-sim.ts
 // src/sims/pow-consensus-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 13.3 — PoW helper sanity sim (Option A)

@@ -1,4 +1,3 @@
-// TARGET: chain src/fullstate/delta.ts
 // src/fullstate/delta.ts
 // -----------------------------------------------------------------------------
 // Pack 56C + 57 — FullLedgerDeltaV1 view + SplitEngine summary log

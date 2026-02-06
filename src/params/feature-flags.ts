@@ -1,4 +1,3 @@
-// TARGET: chain src/params/feature-flags.ts
 // Pack 14.5 — Feature flags for consensus + split shadow
 
 export interface FeatureFlags {

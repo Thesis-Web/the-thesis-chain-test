@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/tx/tx-types.ts
 // src/consensus/tx/tx-types.ts
 // ---------------------------------------------------------------------------
 // Pack 15.2 — THE-specific transaction graph (typed, consensus-side)

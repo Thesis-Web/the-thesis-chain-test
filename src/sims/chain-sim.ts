@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/chain-sim.ts
 // src/sims/chain-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 14.3 — Chain sim updated for canonical block hashes

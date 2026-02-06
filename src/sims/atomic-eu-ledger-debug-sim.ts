@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/atomic-eu-ledger-debug-sim.ts
 // src/sims/atomic-eu-ledger-debug-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 53D — EU Atomic Ledger Debug Sim

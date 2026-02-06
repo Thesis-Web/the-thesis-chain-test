@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/state.ts
 // Pack 10.3 — Consensus State with Difficulty + SplitEngine integrated to actual orchestrator API
 
 import type { Block } from "./block";

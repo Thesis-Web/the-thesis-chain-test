@@ -1,4 +1,3 @@
-// TARGET: chain src/tools/move-legacy-emission-sim.ts
 // src/tools/move-legacy-emission-sim.ts
 // ---------------------------------------------------------------------------
 // Helper script to move the legacy emission-sim.ts into src/sims/legacy/.

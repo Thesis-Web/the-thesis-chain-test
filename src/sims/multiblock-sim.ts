@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/multiblock-sim.ts
 // src/sims/multiblock-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 43 + 48C — Multi-block ChainSim (delta-aware + BackWall hook surface)

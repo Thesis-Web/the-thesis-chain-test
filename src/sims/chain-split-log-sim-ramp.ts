@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/chain-split-log-sim-ramp.ts
 // src/sims/chain-split-log-sim-ramp.ts
 // ---------------------------------------------------------------------------
 // Pack 29 + 30 — Split log sim (ramping EU/THE) + logging

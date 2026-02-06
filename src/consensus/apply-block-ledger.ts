@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/apply-block-ledger.ts
 // src/consensus/apply-block-ledger.ts
 // ---------------------------------------------------------------------------
 // Pack 18  — Ledger wrapper with real tx application

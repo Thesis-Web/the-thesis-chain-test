@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/types.ts
 // src/consensus/types.ts
 // ---------------------------------------------------------------------------
 // Pack 42.1 + 45 — Minimal consensus Block type (temporary)

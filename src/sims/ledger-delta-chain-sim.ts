@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/ledger-delta-chain-sim.ts
 // Using real ChainState + real vault API
 
 import { createEmptyChainState } from "../ledger/state";

@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/eu-tx-shapes-sim.ts
 // src/sims/eu-tx-shapes-sim.ts
 // ---------------------------------------------------------------------------
 // EU TX SHAPES SIM (Pack 22.1) — block-style EU flow

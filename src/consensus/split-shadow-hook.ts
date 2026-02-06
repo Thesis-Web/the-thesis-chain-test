@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/split-shadow-hook.ts
 // src/consensus/split-shadow-hook.ts
 // ---------------------------------------------------------------------------
 // Split Shadow Hook (v0)

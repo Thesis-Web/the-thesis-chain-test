@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/mega-sim.ts
 // src/sims/mega-sim.ts
 // ---------------------------------------------------------------------------
 // MEGA SIM (v0)

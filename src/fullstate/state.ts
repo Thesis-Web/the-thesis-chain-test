@@ -1,4 +1,3 @@
-// TARGET: chain src/fullstate/state.ts
 // src/fullstate/state.ts
 // ---------------------------------------------------------------------------
 // Fullstate façade — re-export canonical FullLedgerStateV1 + helpers

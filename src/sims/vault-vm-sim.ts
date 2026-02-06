@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/vault-vm-sim.ts
 // src/sims/vault-vm-sim.ts
 // ---------------------------------------------------------------------------
 // VAULT VM SIM (Pack 23) — consensus-side VAULT_* txs

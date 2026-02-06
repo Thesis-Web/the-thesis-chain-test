@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/back-wall-sim.ts
 // src/sims/back-wall-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 48 — Back-Wall Guard Framework Sanity Sim

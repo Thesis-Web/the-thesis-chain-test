@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/difficulty-safe.ts
 // src/consensus/difficulty-safe.ts
 // ---------------------------------------------------------------------------
 // Pack 45 — Difficulty Governor (delta-safe scaffold)

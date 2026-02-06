@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/emissions-split-hook-sim.ts
 import { RewardBand, scaleRewardBandBySplit, applyCumulativeSplitFactor } from "../emissions/split-reward-hooks";
 
 export function runEmissionsSplitHookSim() {

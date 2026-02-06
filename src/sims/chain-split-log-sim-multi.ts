@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/chain-split-log-sim-multi.ts
 // src/sims/chain-split-log-sim-multi.ts
 // ---------------------------------------------------------------------------
 // Pack 29 + 30 — Split log sim (discrete thresholds) + logging

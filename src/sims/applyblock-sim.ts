@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/applyblock-sim.ts
 // src/sims/applyblock-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 54B — applyBlock smoke-test sim (updated for ApplyBlockResult)

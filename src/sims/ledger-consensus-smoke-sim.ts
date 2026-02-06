@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/ledger-consensus-smoke-sim.ts
 // src/sims/ledger-consensus-smoke-sim.ts
 // ---------------------------------------------------------------------------
 // LEDGER / CONSENSUS SMOKE SIM (v0)

@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/split-shadow.ts
 // src/consensus/split-shadow.ts
 // ---------------------------------------------------------------------------
 // Split Shadow Helpers (v0)

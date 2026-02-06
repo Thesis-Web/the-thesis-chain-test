@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/consensus-delta.ts
 // src/consensus/consensus-delta.ts
 // Pack 39 — Extend ConsensusDelta with feesCollectedTHE
 // Pack 54C — Restore makeConsensusDelta alias for legacy sims

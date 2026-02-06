@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/atomic-eu-shadow-check.ts
 // src/ledger/atomic-eu-shadow-check.ts
 // ---------------------------------------------------------------------------
 // Pack 54 — EU Atomic Shadow Check Hook (non-invasive)

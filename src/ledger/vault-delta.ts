@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/vault-delta.ts
 // src/ledger/vault-delta.ts
 // ---------------------------------------------------------------------------
 // Pack 38.1 — VaultDelta Full Semantics (structural-only apply)

@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/eu.ts
 // src/ledger/eu.ts
 // ---------------------------------------------------------------------------
 // Ledger v1 — EU Certificate registry wired to vaults (Option B)

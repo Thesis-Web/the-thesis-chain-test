@@ -1,4 +1,3 @@
-// TARGET: chain src/emissions/split-reward-hooks.ts
 export interface RewardBand {
   heightFrom: number;
   heightTo: number;

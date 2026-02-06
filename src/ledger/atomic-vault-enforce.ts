@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/atomic-vault-enforce.ts
 // src/ledger/atomic-vault-enforce.ts
 // ---------------------------------------------------------------------------
 // Pack 50 — Atomic-Coin Phase 2 (vault-side helpers, non-invasive)

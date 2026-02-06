@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/apply-block.ts
 // src/consensus/apply-block.ts
 // ---------------------------------------------------------------------------
 // applyBlock — canonical L1 economic bridge (Unified Ledger)

@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/vault-delta-sim.ts
 // src/sims/vault-delta-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 38 — VaultDelta Full Semantics sim

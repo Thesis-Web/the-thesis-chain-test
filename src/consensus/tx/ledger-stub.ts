@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/tx/ledger-stub.ts
 
 // Pack 15.1 — Ledger stub (immutable pass-through)
 export type LState = {

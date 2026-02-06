@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/eu-ledger-sim-2.ts
 // src/sims/eu-ledger-sim-2.ts
 // ---------------------------------------------------------------------------
 // EU Ledger Sim 2 (Pack 12.2) — multi-owner, multi-vault scenario

@@ -1,4 +1,3 @@
-// TARGET: chain src/emissions/model.ts
 // src/emissions/model.ts
 // ---------------------------------------------------------------------------
 // Emission model for miner + Node Income Pool as a function of block height.

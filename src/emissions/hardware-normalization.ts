@@ -1,4 +1,3 @@
-// TARGET: chain src/emissions/hardware-normalization.ts
 // src/emissions/hardware-normalization.ts
 // ---------------------------------------------------------------------------
 // Hardware normalization scaffold (specs/HARDWARE_NORMALIZATION.md, 090b).

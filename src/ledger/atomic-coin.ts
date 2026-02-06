@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/atomic-coin.ts
 // src/ledger/atomic-coin.ts
 // ---------------------------------------------------------------------------
 // Pack 49 — Atomic-Coin Enforcement (Phase 1: policy + math helpers)

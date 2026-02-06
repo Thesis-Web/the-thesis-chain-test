@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/split-events-sim.ts
 /**
  * Split events sim wired to EU oracle.
  *

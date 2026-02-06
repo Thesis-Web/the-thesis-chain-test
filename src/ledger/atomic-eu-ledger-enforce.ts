@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/atomic-eu-ledger-enforce.ts
 // src/ledger/atomic-eu-ledger-enforce.ts
 // ---------------------------------------------------------------------------
 // Pack 52 — EU Atomic Phase 2 (Ledger enforcement layer)

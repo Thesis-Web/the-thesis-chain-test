@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/atomic-eu-enforce.ts
 // src/ledger/atomic-eu-enforce.ts
 // ---------------------------------------------------------------------------
 // Pack 51 — EU Atomic Enforcement (Phase 1: helpers only)

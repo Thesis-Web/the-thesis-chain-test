@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/fee-model.ts
 // src/ledger/fee-model.ts
 // Pack 39 — Neutral Fee Model (L1)
 //

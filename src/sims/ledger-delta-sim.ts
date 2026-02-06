@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/ledger-delta-sim.ts
 // Synthetic delta sim
 
 import { createEmptyLedgerDelta, recordAccountChange, recordVaultChange, recordEuCertChange } from "../ledger/ledger-delta";

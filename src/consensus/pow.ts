@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/pow.ts
 // src/consensus/pow.ts
 // ---------------------------------------------------------------------------
 // Pack 13.3 — PoW helpers for Thesis L1

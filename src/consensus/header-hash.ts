@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/header-hash.ts
 // src/consensus/header-hash.ts
 // ---------------------------------------------------------------------------
 // Pack 14.0 — Proto L1 block header + canonical hashing

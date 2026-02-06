@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/atomic-eu-ledger-enforce-sim.ts
 // src/sims/atomic-eu-ledger-enforce-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 52 — EU Atomic Phase 2 (Ledger enforcement sim)

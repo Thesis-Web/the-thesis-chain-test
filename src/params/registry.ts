@@ -1,4 +1,3 @@
-// TARGET: chain src/params/registry.ts
 // src/params/registry.ts
 // ---------------------------------------------------------------------------
 // Parameter registry scaffold (§151 / appendix-b-parameter-registry).

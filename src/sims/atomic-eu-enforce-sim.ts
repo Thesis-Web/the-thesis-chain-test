@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/atomic-eu-enforce-sim.ts
 // src/sims/atomic-eu-enforce-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 51 — EU Atomic Enforcement Sim (Phase 1)

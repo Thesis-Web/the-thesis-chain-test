@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/apply-difficulty.ts
 // Pack 14.3.2 — Correct adapter for computeNextDifficulty(state, params, recent)
 //
 // Your governor currently accepts:

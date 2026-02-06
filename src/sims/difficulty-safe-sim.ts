@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/difficulty-safe-sim.ts
 // src/sims/difficulty-safe-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 45 — Difficulty Governor delta-safe sim

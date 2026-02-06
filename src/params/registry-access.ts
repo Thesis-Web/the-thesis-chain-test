@@ -1,4 +1,3 @@
-// TARGET: chain src/params/registry-access.ts
 // src/params/registry-access.ts
 // ---------------------------------------------------------------------------
 // Registry access helpers (v0)

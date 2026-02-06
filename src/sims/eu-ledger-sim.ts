@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/eu-ledger-sim.ts
 // src/sims/eu-ledger-sim.ts
 // ---------------------------------------------------------------------------
 // EU Ledger Sim (Pack 12) — sanity-check EU registry + vault integration

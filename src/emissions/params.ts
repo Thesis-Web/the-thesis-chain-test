@@ -1,4 +1,3 @@
-// TARGET: chain src/emissions/params.ts
 // src/emissions/params.ts
 // ---------------------------------------------------------------------------
 // Canonical chain-level emission + timing parameters for THE (v1, registry-backed)

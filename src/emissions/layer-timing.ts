@@ -1,4 +1,3 @@
-// TARGET: chain src/emissions/layer-timing.ts
 // src/emissions/layer-timing.ts
 // ---------------------------------------------------------------------------
 // Layer timing + clock model (045, 042a).

@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/consensus-skeleton-sim.ts
 // src/sims/consensus-skeleton-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 14.3 — Consensus skeleton sim using canonical block hashes

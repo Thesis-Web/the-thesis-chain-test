@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/atomic-coin-sim.ts
 // src/sims/atomic-coin-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 49 — Atomic-Coin Enforcement (Phase 1 Sim)

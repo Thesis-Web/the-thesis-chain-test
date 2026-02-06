@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/ledger-snapshot.ts
 // Pack 34/35 – FullLedgerSnapshot generator
 
 import type { ChainState } from "./state";

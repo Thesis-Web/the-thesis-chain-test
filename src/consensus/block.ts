@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/block.ts
 // src/consensus/block.ts
 
 import { createHash } from "crypto";

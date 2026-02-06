@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/header-hash-sim.ts
 // src/sims/header-hash-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 14.0 — Header hashing + PoW interplay sim

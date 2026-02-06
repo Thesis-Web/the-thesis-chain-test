@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/pow-sim.ts
 // src/sims/pow-sim.ts
 // ---------------------------------------------------------------------------
 // POW / DIFFICULTY SIM (v0)

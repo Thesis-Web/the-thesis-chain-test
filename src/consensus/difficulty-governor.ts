@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/difficulty-governor.ts
 // src/consensus/difficulty-governor.ts
 // Pack 13.0.1 + 13.1 — integer math difficulty governor with INITIAL_DIFFICULTY_STATE
 

@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/tx/tx-dispatcher.ts
 // src/consensus/tx/tx-dispatcher.ts
 // ---------------------------------------------------------------------------
 // Pack 22.x — THE/EU VM wiring (consensus-side)

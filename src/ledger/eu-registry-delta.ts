@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/eu-registry-delta.ts
 // src/ledger/eu-registry-delta.ts
 // ---------------------------------------------------------------------------
 // Pack 37 — EU Registry Snapshot + Delta utilities

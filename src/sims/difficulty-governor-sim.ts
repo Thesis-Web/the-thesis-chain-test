@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/difficulty-governor-sim.ts
 // src/sims/difficulty-governor-sim.ts
 import { createDifficultyState, computeNextDifficulty } from "../consensus/difficulty-governor";
 

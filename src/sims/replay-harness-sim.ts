@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/replay-harness-sim.ts
 // src/sims/replay-harness-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 46 — Full L1 Replay Harness (Genesis → N blocks)

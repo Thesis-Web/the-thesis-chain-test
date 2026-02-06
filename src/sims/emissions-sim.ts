@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/emissions-sim.ts
 // src/sims/emissions-sim.ts
 // ---------------------------------------------------------------------------
 // EMISSIONS SIM (dev-phase + steady-state)

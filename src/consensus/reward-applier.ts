@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/reward-applier.ts
 // reward-applier.ts (Fixed Pack 8)
 
 import type { EmissionBreakdown } from "../emissions/model";

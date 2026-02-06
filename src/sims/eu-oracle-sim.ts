@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/eu-oracle-sim.ts
 /**
  * Sim-only EU oracle for THE ↔ EU dynamics.
  *

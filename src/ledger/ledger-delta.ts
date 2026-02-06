@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/ledger-delta.ts
 // Pack 34/35 – Full LedgerDelta Engine
 
 import type { ChainState } from "./state";

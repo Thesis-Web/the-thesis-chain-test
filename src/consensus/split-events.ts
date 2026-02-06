@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/split-events.ts
 export interface SplitEvent {
   height: number;
   factor: bigint;

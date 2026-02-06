@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/fullstate-sim.ts
 // src/sims/fullstate-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 41 — FullLedgerStateV1 smoke-test sim

@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/fee-sim.ts
 // src/sims/fee-sim.ts
 // Pack 39 — Fee Model Sim
 

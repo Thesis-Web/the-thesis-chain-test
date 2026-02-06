@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/eu-vm-sim.ts
 // src/sims/eu-vm-sim.ts
 // ---------------------------------------------------------------------------
 // EU VM SIM (Pack 22.1) — consensus-side MINT_EU / REDEEM_EU

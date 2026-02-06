@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/atomic-coin-vault-sim.ts
 // src/sims/atomic-coin-vault-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 50C — Atomic coin Phase 2 vault invariants sim (policy-aligned)

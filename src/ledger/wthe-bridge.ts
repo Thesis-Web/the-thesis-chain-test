@@ -1,4 +1,3 @@
-// TARGET: chain src/ledger/wthe-bridge.ts
 export interface WTheBridgeAccount {
   l1OwnerAddress: string;
   l2Address: string;

@@ -1,4 +1,3 @@
-// TARGET: chain src/consensus/ledger-state.ts
 // src/consensus/ledger-state.ts
 // ---------------------------------------------------------------------------
 // FullLedgerStateV1 — canonical ledger state for consensus (v1)

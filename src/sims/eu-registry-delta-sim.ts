@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/eu-registry-delta-sim.ts
 // src/sims/eu-registry-delta-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 37.1 — EU registry snapshot + delta sim (BigInt-safe logging)

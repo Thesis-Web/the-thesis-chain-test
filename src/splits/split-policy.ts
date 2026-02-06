@@ -1,4 +1,3 @@
-// TARGET: chain src/splits/split-policy.ts
 // src/splits/split-policy.ts
 // ---------------------------------------------------------------------------
 // Split policy scaffold (§085, §101).

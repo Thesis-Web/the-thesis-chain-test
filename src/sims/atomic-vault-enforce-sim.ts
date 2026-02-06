@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/atomic-vault-enforce-sim.ts
 // src/sims/atomic-vault-enforce-sim.ts
 // ---------------------------------------------------------------------------
 // Pack 50 — Atomic-Coin Phase 2 (vault invariants sim)

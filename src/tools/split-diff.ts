@@ -1,4 +1,3 @@
-// TARGET: chain src/tools/split-diff.ts
 // src/tools/split-diff.ts
 // ---------------------------------------------------------------------------
 // Split diff / analysis helpers (v0)

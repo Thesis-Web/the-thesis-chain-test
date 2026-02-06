@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/dev-split-sim.ts
 /**
  * Dev split sim wired to the EU oracle.
  *

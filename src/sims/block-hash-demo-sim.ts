@@ -1,4 +1,3 @@
-// TARGET: chain src/sims/block-hash-demo-sim.ts
 
 import { makeBlock, computeBlockHash } from "../consensus/block";
 
