@@ -1,3 +1,7 @@
 node_modules/
 node_modules/
 sim-logs/
+
+node_modules/
+dist/
+sim-logs/

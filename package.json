@@ -5,17 +5,19 @@
   "license": "MIT",
   "main": "dist/index.js",
   "type": "commonjs",
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "simple-sim": "ts-node src/sims/simple-sim.ts",
-    "pow-sim": "ts-node src/sims/pow-sim.ts",
-    "wire-sim": "ts-node src/sims/wire-sim.ts",
-    "net-wire-sim": "ts-node src/sims/net-wire-sim.ts"
-  },
+   "scripts": {
+  "build": "tsc -p tsconfig.json",
+  "sims": "bash ./run-all-sims.sh",
+  "simple-sim": "ts-node src/sims/simple-sim.ts",
+  "pow-sim": "ts-node src/sims/pow-sim.ts",
+  "wire-sim": "ts-node src/sims/wire-sim.ts",
+  "net-wire-sim": "ts-node src/sims/net-wire-sim.ts"
+},
+
   "keywords": [],
   "author": "",
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^22.19.11",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
