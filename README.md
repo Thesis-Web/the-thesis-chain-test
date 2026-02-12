@@ -1,3 +1,6 @@
+![CI](https://github.com/Thesis-Web/the-thesis-chain-test/actions/workflows/ci.yml/badge.svg)
+
+
 # the-thesis-chain
 The l1 chain build out
 # Mirror copy (Thesis-Web)
@@ -194,4 +197,93 @@ The l1 chain build out
 ### Determinism & Replay
 
 - Replay harness with end-to-end determinism checks (replay-harness-sim.ts)
+
+
+---
+
+# Architecture Overview
+
+## State Transition Model
+
+The Thesis Chain core follows a strict state-transition architecture.
+
+Each block application is:
+
+Input:
+- Previous chain state
+- Block header
+- Block body (transactions, emissions events, split hooks)
+
+Output:
+- New immutable chain state
+- Updated ledger snapshot
+- Deterministic block hash
+
+There is no implicit mutation outside the state transition boundary.  
+All ledger mutations occur through explicit block application.
+
+---
+
+## Determinism Philosophy
+
+This harness is designed around deterministic execution.
+
+Properties:
+
+- No external network calls
+- No non-seeded randomness
+- No time-based logic inside transitions
+- Replay harness verifies monotonic height and hash alignment
+- All state transitions are pure functions of prior state + input
+
+If two environments run the same simulation sequence,
+they must produce identical final height and block hash.
+
+CI enforces this guarantee.
+
+---
+
+## Ledger Invariants
+
+The following invariants are validated across the sim suite:
+
+- Chain height is strictly monotonic
+- lastBlockHash aligns with computed block.hash
+- Difficulty adjustments follow governor rules
+- Atomic values never violate negative or max-supply constraints
+- Vault deltas are reversible and state-consistent
+- Split logic preserves accounting boundaries
+- Emissions respect configured policy
+- EU registry deltas remain consistent across snapshots
+- Replay harness confirms full-state determinism
+
+A green CI run implies these invariants hold.
+
+---
+
+# Extending the Simulation Suite
+
+Adding a new simulation is intentionally simple.
+
+1. Create a new file under:
+
+   src/sims/
+
+2. Implement deterministic logic only.
+   Avoid external IO or time-based behavior.
+
+3. Export nothing — run directly via ts-node.
+
+4. Ensure the sim exits with non-zero status on failure.
+
+5. The gauntlet runner will automatically include it.
+
+Guidelines:
+
+- Keep each sim focused on one invariant or subsystem.
+- Use explicit logging for state transitions.
+- Prefer reproducible inputs over random generation.
+- If randomness is required, seed it explicitly.
+
+Once committed, CI will execute the new sim automatically.
 
